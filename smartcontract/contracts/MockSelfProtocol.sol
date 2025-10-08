@@ -25,9 +25,9 @@ contract MockSelfProtocol is Ownable {
     /**
      * @notice Check if user is verified
      * @param user The user address to check
-     * @return isVerified Whether the user is verified
+     * @return verifiedStatus Whether the user is verified
      */
-    function isVerified(address user) external view returns (bool isVerified) {
+    function isVerified(address user) external view returns (bool verifiedStatus) {
         return verifiedUsers[user];
     }
 
