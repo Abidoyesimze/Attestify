@@ -6,44 +6,52 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
-import "./ISelfProtocol.sol";
+import "@selfxyz/contracts/contracts/abstract/SelfVerificationRoot.sol";
+import "@selfxyz/contracts/contracts/interfaces/ISelfVerificationRoot.sol";
+import "@selfxyz/contracts/contracts/libraries/SelfStructs.sol";
 import "./IMoola.sol";
 
-
-contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
+contract AttestifyVault is
+    SelfVerificationRoot,
+    Ownable,
+    ReentrancyGuard,
+    Pausable
+{
     using SafeERC20 for IERC20;
 
     /* ========== STATE VARIABLES ========== */
 
     // Token contracts
     IERC20 public immutable cUSD;
-    IMToken public immutable mcUSD;  // Moola interest-bearing token
-    
+    IMToken public immutable mcUSD;
+
     // Protocol integrations
-    ISelfProtocol public immutable selfProtocol;
     IMoolaLendingPool public immutable moolaPool;
-    
+
+    // Self Protocol configuration
+    bytes32 public configId;
+
     // Vault accounting (share-based system)
     uint256 public totalShares;
     mapping(address => uint256) public shares;
-    
+
     // User data
     mapping(address => UserProfile) public users;
     mapping(address => StrategyType) public userStrategy;
-    
+
     // Strategy configurations
     mapping(StrategyType => Strategy) public strategies;
-    
+
     // Limits and config
-    uint256 public constant MIN_DEPOSIT = 10e18;      // 10 cUSD
-    uint256 public constant MAX_DEPOSIT = 10_000e18;  // 10,000 cUSD per tx
-    uint256 public constant MAX_TVL = 100_000e18;     // 100,000 cUSD total (MVP)
-    uint256 public constant RESERVE_RATIO = 10;       // Keep 10% liquid for instant withdrawals
-    
+    uint256 public constant MIN_DEPOSIT = 10e18;
+    uint256 public constant MAX_DEPOSIT = 10_000e18;
+    uint256 public constant MAX_TVL = 100_000e18;
+    uint256 public constant RESERVE_RATIO = 10;
+
     // Admin addresses
     address public aiAgent;
     address public treasury;
-    
+
     // Statistics
     uint256 public totalDeposited;
     uint256 public totalWithdrawn;
@@ -57,32 +65,46 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
         uint256 totalDeposited;
         uint256 totalWithdrawn;
         uint256 lastActionTime;
+        uint256 userIdentifier; // From Self Protocol
     }
 
     enum StrategyType {
-        CONSERVATIVE,  // 100% Moola (safest)
-        BALANCED,      // 90% Moola, 10% reserve
-        GROWTH         // 80% Moola, 20% for future opportunities
+        CONSERVATIVE,
+        BALANCED,
+        GROWTH
     }
 
     struct Strategy {
         string name;
-        uint8 moolaAllocation;   // % to deploy to Moola
-        uint8 reserveAllocation; // % to keep liquid
-        uint16 targetAPY;        // Expected APY in basis points
-        uint8 riskLevel;         // 1-10
+        uint8 moolaAllocation;
+        uint8 reserveAllocation;
+        uint16 targetAPY;
+        uint8 riskLevel;
         bool isActive;
     }
 
     /* ========== EVENTS ========== */
 
-    event UserVerified(address indexed user, uint256 timestamp);
+    event UserVerified(
+        address indexed user,
+        uint256 userIdentifier,
+        uint256 timestamp
+    );
     event Deposited(address indexed user, uint256 assets, uint256 shares);
     event Withdrawn(address indexed user, uint256 assets, uint256 shares);
-    event StrategyChanged(address indexed user, StrategyType oldStrategy, StrategyType newStrategy);
+    event StrategyChanged(
+        address indexed user,
+        StrategyType oldStrategy,
+        StrategyType newStrategy
+    );
     event DeployedToMoola(uint256 amount, uint256 timestamp);
     event WithdrawnFromMoola(uint256 amount, uint256 timestamp);
-    event Rebalanced(uint256 moolaBalance, uint256 reserveBalance, uint256 timestamp);
+    event Rebalanced(
+        uint256 moolaBalance,
+        uint256 reserveBalance,
+        uint256 timestamp
+    );
+    event ConfigIdUpdated(bytes32 newConfigId);
 
     /* ========== ERRORS ========== */
 
@@ -93,28 +115,33 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
     error InsufficientShares();
     error InsufficientLiquidity();
     error ZeroAddress();
+    error ConfigNotSet();
 
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
         address _cUSD,
         address _mcUSD,
-        address _selfProtocol,
-        address _moolaPool
-    ) Ownable(msg.sender) {
-        if (_cUSD == address(0) || _mcUSD == address(0) || 
-            _selfProtocol == address(0) || _moolaPool == address(0)) {
+        address _selfProtocolHub,
+        address _moolaPool,
+        string memory _scopeSeed
+    ) SelfVerificationRoot(_selfProtocolHub, _scopeSeed) Ownable(msg.sender) {
+        if (
+            _cUSD == address(0) ||
+            _mcUSD == address(0) ||
+            _selfProtocolHub == address(0) ||
+            _moolaPool == address(0)
+        ) {
             revert ZeroAddress();
         }
-        
+
         cUSD = IERC20(_cUSD);
         mcUSD = IMToken(_mcUSD);
-        selfProtocol = ISelfProtocol(_selfProtocol);
         moolaPool = IMoolaLendingPool(_moolaPool);
         treasury = msg.sender;
-        
+
         _initializeStrategies();
-        
+
         // Approve Moola to spend our cUSD
         cUSD.approve(_moolaPool, type(uint256).max);
     }
@@ -124,7 +151,7 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
             name: "Conservative",
             moolaAllocation: 100,
             reserveAllocation: 0,
-            targetAPY: 350,      // 3.5% (conservative estimate)
+            targetAPY: 350,
             riskLevel: 1,
             isActive: true
         });
@@ -142,193 +169,172 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
             name: "Growth",
             moolaAllocation: 80,
             reserveAllocation: 20,
-            targetAPY: 350,      // Same APY, but more reserve for opportunities
+            targetAPY: 350,
             riskLevel: 5,
             isActive: true
         });
     }
 
+    /* ========== SELF PROTOCOL INTEGRATION ========== */
+
+    /**
+     * @notice Required override: Return the configuration ID for verification
+     */
+    function getConfigId(
+        bytes32 destinationChainId,
+        bytes32 userIdentifier,
+        bytes memory userDefinedData
+    ) public view override returns (bytes32) {
+        if (configId == bytes32(0)) revert ConfigNotSet();
+        return configId;
+    }
+
+    /**
+     * @notice Set the Self Protocol configuration ID
+     * @dev Must be called after deployment with ID from tools.self.xyz
+     */
+    function setConfigId(bytes32 _configId) external onlyOwner {
+        require(_configId != bytes32(0), "Invalid config ID");
+        configId = _configId;
+        emit ConfigIdUpdated(_configId);
+    }
+
+    /**
+     * @notice Hook called after successful verification
+     * @dev Override from SelfVerificationRoot
+     */
+    function customVerificationHook(
+        ISelfVerificationRoot.GenericDiscloseOutputV2 memory output,
+        bytes memory userData
+    ) internal virtual override {
+        // Mark user as verified
+        users[msg.sender].isVerified = true;
+        users[msg.sender].verifiedAt = block.timestamp;
+        users[msg.sender].userIdentifier = output.userIdentifier;
+
+        // Set default strategy
+        userStrategy[msg.sender] = StrategyType.CONSERVATIVE;
+
+        emit UserVerified(msg.sender, output.userIdentifier, block.timestamp);
+    }
+
     /* ========== MODIFIERS ========== */
 
     modifier onlyVerified() {
-        if (!_isVerified(msg.sender)) revert NotVerified();
+        if (!users[msg.sender].isVerified) revert NotVerified();
         _;
     }
 
     /* ========== IDENTITY VERIFICATION ========== */
 
-    function verifyIdentity(bytes calldata proof) external {
-        require(!users[msg.sender].isVerified, "Already verified");
-        
-        bool isValid = selfProtocol.verify(proof);
-        require(isValid, "Invalid proof");
-        
-        users[msg.sender].isVerified = true;
-        users[msg.sender].verifiedAt = block.timestamp;
-        userStrategy[msg.sender] = StrategyType.CONSERVATIVE;
-        
-        emit UserVerified(msg.sender, block.timestamp);
-    }
-
-    function _isVerified(address user) internal view returns (bool) {
-        if (users[user].isVerified) return true;
-        return selfProtocol.isVerified(user);
-    }
-
+    /**
+     * @notice Check if user is verified
+     */
     function isVerified(address user) external view returns (bool) {
-        return _isVerified(user);
+        return users[user].isVerified;
     }
 
     /* ========== CORE FUNCTIONS: DEPOSIT ========== */
 
-    /**
-     * @notice Deposit cUSD and earn yield from Moola Market
-     * @param assets Amount of cUSD to deposit
-     * @return sharesIssued Amount of vault shares received
-     */
-    function deposit(uint256 assets) 
-        external 
-        nonReentrant 
-        whenNotPaused 
-        onlyVerified 
-        returns (uint256 sharesIssued) 
+    function deposit(
+        uint256 assets
+    )
+        external
+        nonReentrant
+        whenNotPaused
+        onlyVerified
+        returns (uint256 sharesIssued)
     {
         if (assets < MIN_DEPOSIT) revert InvalidAmount();
         if (assets > MAX_DEPOSIT) revert ExceedsMaxDeposit();
         if (totalAssets() + assets > MAX_TVL) revert ExceedsMaxTVL();
-        
-        // Calculate shares to issue
+
         sharesIssued = _convertToShares(assets);
-        
-        // Update state
+
         shares[msg.sender] += sharesIssued;
         totalShares += sharesIssued;
         users[msg.sender].totalDeposited += assets;
         users[msg.sender].lastActionTime = block.timestamp;
         totalDeposited += assets;
-        
-        // Transfer cUSD from user
+
         cUSD.safeTransferFrom(msg.sender, address(this), assets);
-        
-        // Deploy to Moola immediately
         _deployToMoola(assets);
-        
+
         emit Deposited(msg.sender, assets, sharesIssued);
     }
 
-    /**
-     * @notice Deploy cUSD to Moola Market to earn interest
-     * @param amount Amount to deploy
-     */
     function _deployToMoola(uint256 amount) internal {
         uint256 reserveAmount = (amount * RESERVE_RATIO) / 100;
         uint256 deployAmount = amount - reserveAmount;
-        
+
         if (deployAmount > 0) {
-            // Deposit to Moola (receives mcUSD in return)
-            moolaPool.deposit(
-                address(cUSD),
-                deployAmount,
-                address(this),
-                0  // No referral code
-            );
-            
+            moolaPool.deposit(address(cUSD), deployAmount, address(this), 0);
             emit DeployedToMoola(deployAmount, block.timestamp);
         }
     }
 
     /* ========== CORE FUNCTIONS: WITHDRAW ========== */
 
-    /**
-     * @notice Withdraw cUSD (redeems from Moola if needed)
-     * @param assets Amount of cUSD to withdraw
-     * @return sharesBurned Amount of shares burned
-     */
-    function withdraw(uint256 assets) 
-        external 
-        nonReentrant 
-        returns (uint256 sharesBurned) 
-    {
+    function withdraw(
+        uint256 assets
+    ) external nonReentrant returns (uint256 sharesBurned) {
         sharesBurned = _convertToShares(assets);
-        
+
         if (shares[msg.sender] < sharesBurned) revert InsufficientShares();
-        
-        // Update state BEFORE external calls
+
         shares[msg.sender] -= sharesBurned;
         totalShares -= sharesBurned;
         users[msg.sender].totalWithdrawn += assets;
         users[msg.sender].lastActionTime = block.timestamp;
         totalWithdrawn += assets;
-        
-        // Check if we need to withdraw from Moola
+
         uint256 reserveBalance = cUSD.balanceOf(address(this));
-        
+
         if (reserveBalance < assets) {
-            // Need to withdraw from Moola
             uint256 shortfall = assets - reserveBalance;
             _withdrawFromMoola(shortfall);
         }
-        
-        // Transfer cUSD to user
+
         cUSD.safeTransfer(msg.sender, assets);
-        
+
         emit Withdrawn(msg.sender, assets, sharesBurned);
     }
 
-    /**
-     * @notice Withdraw from Moola Market
-     * @param amount Amount needed
-     */
     function _withdrawFromMoola(uint256 amount) internal {
-        // Withdraw from Moola (burns mcUSD, returns cUSD)
         uint256 withdrawn = moolaPool.withdraw(
             address(cUSD),
             amount,
             address(this)
         );
-        
         emit WithdrawnFromMoola(withdrawn, block.timestamp);
     }
 
     /* ========== VIEW FUNCTIONS ========== */
 
-    /**
-     * @notice Get total assets under management (reserve + Moola)
-     * @return uint256 Total cUSD value
-     */
     function totalAssets() public view returns (uint256) {
         uint256 reserveBalance = cUSD.balanceOf(address(this));
         uint256 moolaBalance = mcUSD.balanceOf(address(this));
         return reserveBalance + moolaBalance;
     }
 
-    /**
-     * @notice Get user's current balance in cUSD (including yield)
-     */
     function balanceOf(address user) external view returns (uint256) {
         return _convertToAssets(shares[user]);
     }
 
-    /**
-     * @notice Get user's total earnings
-     */
     function getEarnings(address user) external view returns (uint256) {
         uint256 currentBalance = _convertToAssets(shares[user]);
         uint256 deposited = users[user].totalDeposited;
         uint256 withdrawn = users[user].totalWithdrawn;
-        
+
         if (currentBalance + withdrawn > deposited) {
             return (currentBalance + withdrawn) - deposited;
         }
         return 0;
     }
 
-    /**
-     * @notice Get vault statistics
-     */
-    function getVaultStats() 
-        external 
-        view 
+    function getVaultStats()
+        external
+        view
         returns (
             uint256 _totalAssets,
             uint256 _totalShares,
@@ -336,7 +342,7 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
             uint256 moolaBalance,
             uint256 _totalDeposited,
             uint256 _totalWithdrawn
-        ) 
+        )
     {
         return (
             totalAssets(),
@@ -348,13 +354,8 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @notice Get current APY
-     */
     function getCurrentAPY() external view returns (uint256) {
-        // In production, could fetch real-time APY from Moola
-        // For MVP, return target APY
-        return 350; // 3.5%
+        return 350;
     }
 
     /* ========== SHARE CONVERSION ========== */
@@ -374,38 +375,36 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
 
     function changeStrategy(StrategyType newStrategy) external onlyVerified {
         require(strategies[newStrategy].isActive, "Invalid strategy");
-        
+
         StrategyType oldStrategy = userStrategy[msg.sender];
         userStrategy[msg.sender] = newStrategy;
-        
+
         emit StrategyChanged(msg.sender, oldStrategy, newStrategy);
     }
 
     /* ========== ADMIN FUNCTIONS ========== */
 
-    /**
-     * @notice Rebalance vault (maintain target reserve ratio)
-     * @dev Can be called by owner or AI agent
-     */
     function rebalance() external {
         require(msg.sender == owner() || msg.sender == aiAgent, "Unauthorized");
-        
+
         uint256 _totalAssets = totalAssets();
         uint256 targetReserve = (_totalAssets * RESERVE_RATIO) / 100;
         uint256 currentReserve = cUSD.balanceOf(address(this));
-        
+
         if (currentReserve < targetReserve) {
-            // Withdraw from Moola to meet reserve target
             uint256 needed = targetReserve - currentReserve;
             _withdrawFromMoola(needed);
         } else if (currentReserve > targetReserve * 2) {
-            // Too much reserve, deploy excess to Moola
             uint256 excess = currentReserve - targetReserve;
             _deployToMoola(excess);
         }
-        
+
         lastRebalance = block.timestamp;
-        emit Rebalanced(mcUSD.balanceOf(address(this)), cUSD.balanceOf(address(this)), block.timestamp);
+        emit Rebalanced(
+            mcUSD.balanceOf(address(this)),
+            cUSD.balanceOf(address(this)),
+            block.timestamp
+        );
     }
 
     function setAIAgent(address _aiAgent) external onlyOwner {
@@ -426,10 +425,10 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
         _unpause();
     }
 
-    /**
-     * @notice Emergency withdraw (only if paused)
-     */
-    function emergencyWithdraw(address token, uint256 amount) external onlyOwner {
+    function emergencyWithdraw(
+        address token,
+        uint256 amount
+    ) external onlyOwner {
         require(paused(), "Not paused");
         IERC20(token).safeTransfer(owner(), amount);
     }
