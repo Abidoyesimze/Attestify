@@ -1,24 +1,50 @@
-import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
-import * as dotenv from "dotenv";
+import type { HardhatUserConfig } from "hardhat/config";
 
-dotenv.config();
-
-const { PRIVATE_KEY, CELO_ALFAJORES_RPC, SEPOLIA_RPC } = process.env;
+import "@nomicfoundation/hardhat-ethers";
+import "@nomicfoundation/hardhat-network-helpers";
+import { configVariable } from "hardhat/config";
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.28",
+  mocha: {
+    timeout: 40000,
+  },
+  solidity: {
+    profiles: {
+      default: {
+        version: "0.8.28",
+      },
+      production: {
+        version: "0.8.28",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+    },
+  },
   networks: {
-    hardhat: {},
-    alfajores: {
-      url: CELO_ALFAJORES_RPC || "https://alfajores-forno.celo-testnet.org",
-      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
-      chainId: 44787,
+    hardhatMainnet: {
+      type: "edr-simulated",
+      chainType: "l1",
+    },
+    hardhatOp: {
+      type: "edr-simulated",
+      chainType: "op",
     },
     sepolia: {
-      url: SEPOLIA_RPC || "https://sepolia.infura.io/v3/YOUR_INFURA_KEY",
-      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
-      chainId: 11155111,
+      type: "http",
+      chainType: "l1",
+      url: configVariable("SEPOLIA_RPC_URL"),
+      accounts: [configVariable("SEPOLIA_PRIVATE_KEY")],
+    },
+    alfajores: {
+      type: "http",
+      chainType: "l1",
+      url: process.env.ALFAJORES_RPC || "https://alfajores-forno.celo-testnet.org",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 44787,
     },
   },
 };
