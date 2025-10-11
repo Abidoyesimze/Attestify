@@ -62,61 +62,29 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ReentrancyGuard__factory>;
     getContractFactory(
-      name: "SelfVerificationRoot",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.SelfVerificationRoot__factory>;
-    getContractFactory(
-      name: "IDscCircuitVerifier",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IDscCircuitVerifier__factory>;
-    getContractFactory(
-      name: "IIdentityVerificationHubV2",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IIdentityVerificationHubV2__factory>;
-    getContractFactory(
-      name: "IPoseidonT3",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IPoseidonT3__factory>;
-    getContractFactory(
-      name: "IAadhaarRegisterCircuitVerifier",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IAadhaarRegisterCircuitVerifier__factory>;
-    getContractFactory(
-      name: "IRegisterCircuitVerifier",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IRegisterCircuitVerifier__factory>;
-    getContractFactory(
-      name: "ISelfVerificationRoot",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ISelfVerificationRoot__factory>;
-    getContractFactory(
-      name: "Formatter",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Formatter__factory>;
-    getContractFactory(
       name: "AttestifyVault",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.AttestifyVault__factory>;
     getContractFactory(
-      name: "IMoolaLendingPool",
+      name: "IAToken",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IMoolaLendingPool__factory>;
+    ): Promise<Contracts.IAToken__factory>;
     getContractFactory(
-      name: "IMToken",
+      name: "IPool",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IMToken__factory>;
-    getContractFactory(
-      name: "MoolaAddresses",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.MoolaAddresses__factory>;
+    ): Promise<Contracts.IPool__factory>;
     getContractFactory(
       name: "ISelfProtocol",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ISelfProtocol__factory>;
     getContractFactory(
-      name: "MockMoolaLendingPool",
+      name: "MockAavePool",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.MockMoolaLendingPool__factory>;
+    ): Promise<Contracts.MockAavePool__factory>;
+    getContractFactory(
+      name: "MockAToken",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.MockAToken__factory>;
     getContractFactory(
       name: "MockSelfProtocol",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -187,75 +155,35 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.ReentrancyGuard>;
     getContractAt(
-      name: "SelfVerificationRoot",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.SelfVerificationRoot>;
-    getContractAt(
-      name: "IDscCircuitVerifier",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IDscCircuitVerifier>;
-    getContractAt(
-      name: "IIdentityVerificationHubV2",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IIdentityVerificationHubV2>;
-    getContractAt(
-      name: "IPoseidonT3",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IPoseidonT3>;
-    getContractAt(
-      name: "IAadhaarRegisterCircuitVerifier",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IAadhaarRegisterCircuitVerifier>;
-    getContractAt(
-      name: "IRegisterCircuitVerifier",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IRegisterCircuitVerifier>;
-    getContractAt(
-      name: "ISelfVerificationRoot",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.ISelfVerificationRoot>;
-    getContractAt(
-      name: "Formatter",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.Formatter>;
-    getContractAt(
       name: "AttestifyVault",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.AttestifyVault>;
     getContractAt(
-      name: "IMoolaLendingPool",
+      name: "IAToken",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.IMoolaLendingPool>;
+    ): Promise<Contracts.IAToken>;
     getContractAt(
-      name: "IMToken",
+      name: "IPool",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.IMToken>;
-    getContractAt(
-      name: "MoolaAddresses",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.MoolaAddresses>;
+    ): Promise<Contracts.IPool>;
     getContractAt(
       name: "ISelfProtocol",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.ISelfProtocol>;
     getContractAt(
-      name: "MockMoolaLendingPool",
+      name: "MockAavePool",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.MockMoolaLendingPool>;
+    ): Promise<Contracts.MockAavePool>;
+    getContractAt(
+      name: "MockAToken",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.MockAToken>;
     getContractAt(
       name: "MockSelfProtocol",
       address: string | ethers.Addressable,
@@ -316,61 +244,29 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ReentrancyGuard>;
     deployContract(
-      name: "SelfVerificationRoot",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.SelfVerificationRoot>;
-    deployContract(
-      name: "IDscCircuitVerifier",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IDscCircuitVerifier>;
-    deployContract(
-      name: "IIdentityVerificationHubV2",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IIdentityVerificationHubV2>;
-    deployContract(
-      name: "IPoseidonT3",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IPoseidonT3>;
-    deployContract(
-      name: "IAadhaarRegisterCircuitVerifier",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IAadhaarRegisterCircuitVerifier>;
-    deployContract(
-      name: "IRegisterCircuitVerifier",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IRegisterCircuitVerifier>;
-    deployContract(
-      name: "ISelfVerificationRoot",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ISelfVerificationRoot>;
-    deployContract(
-      name: "Formatter",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.Formatter>;
-    deployContract(
       name: "AttestifyVault",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.AttestifyVault>;
     deployContract(
-      name: "IMoolaLendingPool",
+      name: "IAToken",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IMoolaLendingPool>;
+    ): Promise<Contracts.IAToken>;
     deployContract(
-      name: "IMToken",
+      name: "IPool",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IMToken>;
-    deployContract(
-      name: "MoolaAddresses",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.MoolaAddresses>;
+    ): Promise<Contracts.IPool>;
     deployContract(
       name: "ISelfProtocol",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ISelfProtocol>;
     deployContract(
-      name: "MockMoolaLendingPool",
+      name: "MockAavePool",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.MockMoolaLendingPool>;
+    ): Promise<Contracts.MockAavePool>;
+    deployContract(
+      name: "MockAToken",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MockAToken>;
     deployContract(
       name: "MockSelfProtocol",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -441,75 +337,35 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ReentrancyGuard>;
     deployContract(
-      name: "SelfVerificationRoot",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.SelfVerificationRoot>;
-    deployContract(
-      name: "IDscCircuitVerifier",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IDscCircuitVerifier>;
-    deployContract(
-      name: "IIdentityVerificationHubV2",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IIdentityVerificationHubV2>;
-    deployContract(
-      name: "IPoseidonT3",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IPoseidonT3>;
-    deployContract(
-      name: "IAadhaarRegisterCircuitVerifier",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IAadhaarRegisterCircuitVerifier>;
-    deployContract(
-      name: "IRegisterCircuitVerifier",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IRegisterCircuitVerifier>;
-    deployContract(
-      name: "ISelfVerificationRoot",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ISelfVerificationRoot>;
-    deployContract(
-      name: "Formatter",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.Formatter>;
-    deployContract(
       name: "AttestifyVault",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.AttestifyVault>;
     deployContract(
-      name: "IMoolaLendingPool",
+      name: "IAToken",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IMoolaLendingPool>;
+    ): Promise<Contracts.IAToken>;
     deployContract(
-      name: "IMToken",
+      name: "IPool",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IMToken>;
-    deployContract(
-      name: "MoolaAddresses",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.MoolaAddresses>;
+    ): Promise<Contracts.IPool>;
     deployContract(
       name: "ISelfProtocol",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ISelfProtocol>;
     deployContract(
-      name: "MockMoolaLendingPool",
+      name: "MockAavePool",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.MockMoolaLendingPool>;
+    ): Promise<Contracts.MockAavePool>;
+    deployContract(
+      name: "MockAToken",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MockAToken>;
     deployContract(
       name: "MockSelfProtocol",
       args: any[],
