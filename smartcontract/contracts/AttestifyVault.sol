@@ -9,7 +9,6 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 import "./ISelfProtocol.sol";
 import "./IAave.sol";
 
-
 contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
 
@@ -17,33 +16,33 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
 
     // Token contracts
     IERC20 public immutable cUSD;
-    IAToken public immutable acUSD;  
-IPool public immutable aavePool;  
-    
+    IAToken public immutable acUSD;
+    IPool public immutable aavePool;
+
     // Protocol integrations
     ISelfProtocol public immutable selfProtocol;
-    
+
     // Vault accounting (share-based system)
     uint256 public totalShares;
     mapping(address => uint256) public shares;
-    
+
     // User data
     mapping(address => UserProfile) public users;
     mapping(address => StrategyType) public userStrategy;
-    
+
     // Strategy configurations
     mapping(StrategyType => Strategy) public strategies;
-    
+
     // Limits and config
-    uint256 public constant MIN_DEPOSIT = 10e18;      // 10 cUSD
-    uint256 public constant MAX_DEPOSIT = 10_000e18;  // 10,000 cUSD per tx
-    uint256 public constant MAX_TVL = 100_000e18;     // 100,000 cUSD total (MVP)
-    uint256 public constant RESERVE_RATIO = 10;       // Keep 10% liquid for instant withdrawals
-    
+    uint256 public constant MIN_DEPOSIT = 10e18; // 10 cUSD
+    uint256 public constant MAX_DEPOSIT = 10_000e18; // 10,000 cUSD per tx
+    uint256 public constant MAX_TVL = 100_000e18; // 100,000 cUSD total (MVP)
+    uint256 public constant RESERVE_RATIO = 10; // Keep 10% liquid for instant withdrawals
+
     // Admin addresses
     address public aiAgent;
     address public treasury;
-    
+
     // Statistics
     uint256 public totalDeposited;
     uint256 public totalWithdrawn;
@@ -60,17 +59,17 @@ IPool public immutable aavePool;
     }
 
     enum StrategyType {
-        CONSERVATIVE,  // 100% Aave (safest)
-        BALANCED,      // 90% Aave, 10% reserve
-        GROWTH         // 80% Aave, 20% for future opportunities
+        CONSERVATIVE, // 100% Aave (safest)
+        BALANCED, // 90% Aave, 10% reserve
+        GROWTH // 80% Aave, 20% for future opportunities
     }
 
     struct Strategy {
         string name;
-        uint8 aaveAllocation;    // % to deploy to Aave
+        uint8 aaveAllocation; // % to deploy to Aave
         uint8 reserveAllocation; // % to keep liquid
-        uint16 targetAPY;        // Expected APY in basis points
-        uint8 riskLevel;         // 1-10
+        uint16 targetAPY; // Expected APY in basis points
+        uint8 riskLevel; // 1-10
         bool isActive;
     }
 
@@ -79,10 +78,18 @@ IPool public immutable aavePool;
     event UserVerified(address indexed user, uint256 timestamp);
     event Deposited(address indexed user, uint256 assets, uint256 shares);
     event Withdrawn(address indexed user, uint256 assets, uint256 shares);
-    event StrategyChanged(address indexed user, StrategyType oldStrategy, StrategyType newStrategy);
+    event StrategyChanged(
+        address indexed user,
+        StrategyType oldStrategy,
+        StrategyType newStrategy
+    );
     event DeployedToAave(uint256 amount, uint256 timestamp);
     event WithdrawnFromAave(uint256 amount, uint256 timestamp);
-    event Rebalanced(uint256 aaveBalance, uint256 reserveBalance, uint256 timestamp);
+    event Rebalanced(
+        uint256 aaveBalance,
+        uint256 reserveBalance,
+        uint256 timestamp
+    );
 
     /* ========== ERRORS ========== */
 
@@ -102,21 +109,24 @@ IPool public immutable aavePool;
         address _selfProtocol,
         address _aavePool
     ) Ownable(msg.sender) {
-        if (_cUSD == address(0) || _acUSD == address(0) || 
-            _selfProtocol == address(0) || _aavePool == address(0)) {
+        if (
+            _cUSD == address(0) ||
+            _acUSD == address(0) ||
+            _selfProtocol == address(0) ||
+            _aavePool == address(0)
+        ) {
             revert ZeroAddress();
         }
-        
+
         cUSD = IERC20(_cUSD);
         acUSD = IAToken(_acUSD);
         selfProtocol = ISelfProtocol(_selfProtocol);
         aavePool = IPool(_aavePool);
         treasury = msg.sender;
-        
+
         _initializeStrategies();
-        
-        // Approve Aave to spend our cUSD
-        cUSD.approve(_aavePool, type(uint256).max);
+
+        // Note: cUSD approval will be done on first deposit to avoid constructor issues
     }
 
     function _initializeStrategies() internal {
@@ -124,7 +134,7 @@ IPool public immutable aavePool;
             name: "Conservative",
             aaveAllocation: 100,
             reserveAllocation: 0,
-            targetAPY: 350,      // 3.5% (conservative estimate)
+            targetAPY: 350, // 3.5% (conservative estimate)
             riskLevel: 1,
             isActive: true
         });
@@ -142,7 +152,7 @@ IPool public immutable aavePool;
             name: "Growth",
             aaveAllocation: 80,
             reserveAllocation: 20,
-            targetAPY: 350,      // Same APY, but more reserve for opportunities
+            targetAPY: 350, // Same APY, but more reserve for opportunities
             riskLevel: 5,
             isActive: true
         });
@@ -159,14 +169,14 @@ IPool public immutable aavePool;
 
     function verifyIdentity(bytes calldata proof) external {
         require(!users[msg.sender].isVerified, "Already verified");
-        
+
         bool isValid = selfProtocol.verify(proof);
         require(isValid, "Invalid proof");
-        
+
         users[msg.sender].isVerified = true;
         users[msg.sender].verifiedAt = block.timestamp;
         userStrategy[msg.sender] = StrategyType.CONSERVATIVE;
-        
+
         emit UserVerified(msg.sender, block.timestamp);
     }
 
@@ -186,33 +196,40 @@ IPool public immutable aavePool;
      * @param assets Amount of cUSD to deposit
      * @return sharesIssued Amount of vault shares received
      */
-    function deposit(uint256 assets) 
-        external 
-        nonReentrant 
-        whenNotPaused 
-        onlyVerified 
-        returns (uint256 sharesIssued) 
+    function deposit(
+        uint256 assets
+    )
+        external
+        nonReentrant
+        whenNotPaused
+        onlyVerified
+        returns (uint256 sharesIssued)
     {
         if (assets < MIN_DEPOSIT) revert InvalidAmount();
         if (assets > MAX_DEPOSIT) revert ExceedsMaxDeposit();
         if (totalAssets() + assets > MAX_TVL) revert ExceedsMaxTVL();
-        
+
         // Calculate shares to issue
         sharesIssued = _convertToShares(assets);
-        
+
         // Update state
         shares[msg.sender] += sharesIssued;
         totalShares += sharesIssued;
         users[msg.sender].totalDeposited += assets;
         users[msg.sender].lastActionTime = block.timestamp;
         totalDeposited += assets;
-        
+
         // Transfer cUSD from user
         cUSD.safeTransferFrom(msg.sender, address(this), assets);
-        
+
+        // Ensure Aave has approval (in case constructor approval failed)
+        if (cUSD.allowance(address(this), address(aavePool)) < assets) {
+            cUSD.approve(address(aavePool), type(uint256).max);
+        }
+
         // Deploy to Aave immediately
         _deployToAave(assets);
-        
+
         emit Deposited(msg.sender, assets, sharesIssued);
     }
 
@@ -223,16 +240,16 @@ IPool public immutable aavePool;
     function _deployToAave(uint256 amount) internal {
         uint256 reserveAmount = (amount * RESERVE_RATIO) / 100;
         uint256 deployAmount = amount - reserveAmount;
-        
+
         if (deployAmount > 0) {
             // Supply to Aave (receives acUSD in return)
             aavePool.supply(
                 address(cUSD),
                 deployAmount,
                 address(this),
-                0  // No referral code
+                0 // No referral code
             );
-            
+
             emit DeployedToAave(deployAmount, block.timestamp);
         }
     }
@@ -244,34 +261,32 @@ IPool public immutable aavePool;
      * @param assets Amount of cUSD to withdraw
      * @return sharesBurned Amount of shares burned
      */
-    function withdraw(uint256 assets) 
-        external 
-        nonReentrant 
-        returns (uint256 sharesBurned) 
-    {
+    function withdraw(
+        uint256 assets
+    ) external nonReentrant returns (uint256 sharesBurned) {
         sharesBurned = _convertToShares(assets);
-        
+
         if (shares[msg.sender] < sharesBurned) revert InsufficientShares();
-        
+
         // Update state BEFORE external calls
         shares[msg.sender] -= sharesBurned;
         totalShares -= sharesBurned;
         users[msg.sender].totalWithdrawn += assets;
         users[msg.sender].lastActionTime = block.timestamp;
         totalWithdrawn += assets;
-        
+
         // Check if we need to withdraw from Aave
         uint256 reserveBalance = cUSD.balanceOf(address(this));
-        
+
         if (reserveBalance < assets) {
             // Need to withdraw from Aave
             uint256 shortfall = assets - reserveBalance;
             _withdrawFromAave(shortfall);
         }
-        
+
         // Transfer cUSD to user
         cUSD.safeTransfer(msg.sender, assets);
-        
+
         emit Withdrawn(msg.sender, assets, sharesBurned);
     }
 
@@ -286,7 +301,7 @@ IPool public immutable aavePool;
             amount,
             address(this)
         );
-        
+
         emit WithdrawnFromAave(withdrawn, block.timestamp);
     }
 
@@ -316,7 +331,7 @@ IPool public immutable aavePool;
         uint256 currentBalance = _convertToAssets(shares[user]);
         uint256 deposited = users[user].totalDeposited;
         uint256 withdrawn = users[user].totalWithdrawn;
-        
+
         if (currentBalance + withdrawn > deposited) {
             return (currentBalance + withdrawn) - deposited;
         }
@@ -326,9 +341,9 @@ IPool public immutable aavePool;
     /**
      * @notice Get vault statistics
      */
-    function getVaultStats() 
-        external 
-        view 
+    function getVaultStats()
+        external
+        view
         returns (
             uint256 _totalAssets,
             uint256 _totalShares,
@@ -336,7 +351,7 @@ IPool public immutable aavePool;
             uint256 aaveBalance,
             uint256 _totalDeposited,
             uint256 _totalWithdrawn
-        ) 
+        )
     {
         return (
             totalAssets(),
@@ -374,10 +389,10 @@ IPool public immutable aavePool;
 
     function changeStrategy(StrategyType newStrategy) external onlyVerified {
         require(strategies[newStrategy].isActive, "Invalid strategy");
-        
+
         StrategyType oldStrategy = userStrategy[msg.sender];
         userStrategy[msg.sender] = newStrategy;
-        
+
         emit StrategyChanged(msg.sender, oldStrategy, newStrategy);
     }
 
@@ -389,11 +404,11 @@ IPool public immutable aavePool;
      */
     function rebalance() external {
         require(msg.sender == owner() || msg.sender == aiAgent, "Unauthorized");
-        
+
         uint256 _totalAssets = totalAssets();
         uint256 targetReserve = (_totalAssets * RESERVE_RATIO) / 100;
         uint256 currentReserve = cUSD.balanceOf(address(this));
-        
+
         if (currentReserve < targetReserve) {
             // Withdraw from Aave to meet reserve target
             uint256 needed = targetReserve - currentReserve;
@@ -403,9 +418,13 @@ IPool public immutable aavePool;
             uint256 excess = currentReserve - targetReserve;
             _deployToAave(excess);
         }
-        
+
         lastRebalance = block.timestamp;
-        emit Rebalanced(acUSD.balanceOf(address(this)), cUSD.balanceOf(address(this)), block.timestamp);
+        emit Rebalanced(
+            acUSD.balanceOf(address(this)),
+            cUSD.balanceOf(address(this)),
+            block.timestamp
+        );
     }
 
     function setAIAgent(address _aiAgent) external onlyOwner {
@@ -427,9 +446,23 @@ IPool public immutable aavePool;
     }
 
     /**
+     * @notice Manual verification for testing ONLY (REMOVE IN PRODUCTION!)
+     */
+    function manualVerifyForTesting(address user) external onlyOwner {
+        users[user].isVerified = true;
+        users[user].verifiedAt = block.timestamp;
+        userStrategy[user] = StrategyType.CONSERVATIVE;
+
+        emit UserVerified(user, block.timestamp);
+    }
+
+    /**
      * @notice Emergency withdraw (only if paused)
      */
-    function emergencyWithdraw(address token, uint256 amount) external onlyOwner {
+    function emergencyWithdraw(
+        address token,
+        uint256 amount
+    ) external onlyOwner {
         require(paused(), "Not paused");
         IERC20(token).safeTransfer(owner(), amount);
     }
