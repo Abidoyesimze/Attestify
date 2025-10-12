@@ -1,7 +1,7 @@
 import hre from "hardhat";
 
 async function main() {
-  console.log("🚀 Deploying Attestify to Celo Alfajores...\n");
+  console.log("🚀 Deploying AttestifyVault to Celo Sepolia...\n");
 
   const [deployer] = await hre.ethers.getSigners();
   console.log("Deploying with account:", deployer.address);
@@ -10,27 +10,26 @@ async function main() {
     (await deployer.provider.getBalance(deployer.address)).toString()
   );
 
-  // Contract addresses on Celo Alfajores Testnet
+  // 🧩 Contract addresses on Celo Sepolia
   const SELF_PROTOCOL = "0x16ECBA51e18a4a7e61fdC417f0d47AFEeDfbed74";
-  const CUSD_ADDRESS = "0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1";
-  const MCUSD_ADDRESS = "0x71DB38719f9113A36e14F409bAD4F07B58b4730b";
-  const MOOLA_POOL = "0x0886f74eEEc443fBb6907fB5528B57C28E813129";
+  const CUSD_ADDRESS = "0x765DE816845861e75A25fCA122bb6898B8B1282a";
+  const ACUSD_ADDRESS = "0xBba98352628B0B0c4b40583F593fFCb630935a45";
+  const AAVE_POOL = "0x3E59A31363E2ad014dcbc521c4a0d5757d9f3402";
 
-  console.log("\n📝 Using Celo Alfajores contracts:");
+  console.log("\n📝 Using Celo Sepolia (or Fork) Contracts:");
   console.log("  Self Protocol:", SELF_PROTOCOL);
   console.log("  cUSD:", CUSD_ADDRESS);
-  console.log("  mcUSD (Moola):", MCUSD_ADDRESS);
-  console.log("  Moola LendingPool:", MOOLA_POOL);
+  console.log("  acUSD (Aave):", ACUSD_ADDRESS);
+  console.log("  Aave Pool:", AAVE_POOL);
 
-  // Deploy AttestifyVault
+  // 🚀 Deploy AttestifyVault
   console.log("\n📝 Deploying AttestifyVault...");
   const AttestifyVault = await hre.ethers.getContractFactory("AttestifyVault");
   const vault = await AttestifyVault.deploy(
     CUSD_ADDRESS,
-    MCUSD_ADDRESS,
+    ACUSD_ADDRESS,
     SELF_PROTOCOL,
-    MOOLA_POOL,
-    "attestify-vault-scope" // scopeSeed parameter
+    AAVE_POOL
   );
 
   await vault.waitForDeployment();
@@ -38,23 +37,21 @@ async function main() {
 
   console.log("\n✅ AttestifyVault deployed to:", vaultAddress);
 
-  // Save deployment info
-  const deploymentInfo = {
-    network: hre.network.name,
-    deployer: deployer.address,
-    timestamp: new Date().toISOString(),
-    contracts: {
-      AttestifyVault: vaultAddress,
-      cUSD: CUSD_ADDRESS,
-      mcUSD: MCUSD_ADDRESS,
-      MoolaLendingPool: MOOLA_POOL,
-      SelfProtocol: SELF_PROTOCOL,
-    },
+  // 💾 Deployment Summary
+  const deploymentSummary = {
+    vault: vaultAddress,
+    cUSD: CUSD_ADDRESS,
+    acUSD: ACUSD_ADDRESS,
+    aavePool: AAVE_POOL,
+    selfProtocol: SELF_PROTOCOL,
   };
 
-  console.log("\n📄 Deployment Summary:");
-  console.log(JSON.stringify(deploymentInfo, null, 2));
+  console.log("\n============================================================");
+  console.log("💾 Deployment summary:");
+  console.log(JSON.stringify(deploymentSummary, null, 2));
+  console.log("============================================================\n");
 
+  // 🔍 Verify on Celoscan if API key is available
   if (process.env.CELOSCAN_API_KEY) {
     console.log("\n⏳ Waiting for block confirmations...");
     await vault.deploymentTransaction().wait(5);
@@ -65,10 +62,9 @@ async function main() {
         address: vaultAddress,
         constructorArguments: [
           CUSD_ADDRESS,
-          MCUSD_ADDRESS,
+          ACUSD_ADDRESS,
           SELF_PROTOCOL,
-          MOOLA_POOL,
-          "attestify-vault-scope",
+          AAVE_POOL,
         ],
       });
       console.log("✅ Contract verified!");

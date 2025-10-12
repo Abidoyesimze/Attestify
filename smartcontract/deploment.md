@@ -1,14 +1,11 @@
 
-📄 Deployment Summary:
+💾 Deployment summary:
 {
-  "network": "alfajores",
-  "deployer": "0x95e1CF9174AbD55E47b9EDa1b3f0F2ba0f4369a0",
-  "timestamp": "2025-10-08T01:43:14.655Z",
-  "contracts": {
-    "AttestifyVault": "0xeAf73aee69441cA68166bc0E1BE63E70F2ce2c06",
-    "cUSD": "0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1",
-    "mcUSD": "0x71DB38719f9113A36e14F409bAD4F07B58b4730b",
-    "MoolaLendingPool": "0x0886f74eEEc443fBb6907fB5528B57C28E813129",
-    "SelfProtocol": "0x16ECBA51e18a4a7e61fdC417f0d47AFEeDfbed74"
-  }
+  "Attestifyvault": "0x99dBE4AEa58E518C50a1c04aE9b48C9F6354612f",
+  "cUSD": "0xb9bEECD1A582768711dE1EE7B0A1d582D9d72a6C",
+  "selfProtocol": "0x16ECBA51e18a4a7e61fdC417f0d47AFEeDfbed74",
+   "cUSD (Real)": 0x765DE816845861e75A25fCA122bb6898B8B1282a
+  "acUSD (Real Aave)": 0xBba98352628B0B0c4b40583F593fFCb630935a45
+  "Aave Pool (Real)": 0x3E59A31363E2ad014dcbc521c4a0d5757d9f3402
 }
+

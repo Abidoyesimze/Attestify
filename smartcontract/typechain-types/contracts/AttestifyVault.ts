@@ -30,30 +30,27 @@ export interface AttestifyVaultInterface extends Interface {
       | "MAX_TVL"
       | "MIN_DEPOSIT"
       | "RESERVE_RATIO"
+      | "aavePool"
+      | "acUSD"
       | "aiAgent"
       | "balanceOf"
       | "cUSD"
       | "changeStrategy"
-      | "configId"
       | "deposit"
       | "emergencyWithdraw"
-      | "getConfigId"
       | "getCurrentAPY"
       | "getEarnings"
       | "getVaultStats"
       | "isVerified"
       | "lastRebalance"
-      | "mcUSD"
-      | "moolaPool"
-      | "onVerificationSuccess"
+      | "manualVerifyForTesting"
       | "owner"
       | "pause"
       | "paused"
       | "rebalance"
       | "renounceOwnership"
-      | "scope"
+      | "selfProtocol"
       | "setAIAgent"
-      | "setConfigId"
       | "setTreasury"
       | "shares"
       | "strategies"
@@ -66,14 +63,13 @@ export interface AttestifyVaultInterface extends Interface {
       | "unpause"
       | "userStrategy"
       | "users"
-      | "verifySelfProof"
+      | "verifyIdentity"
       | "withdraw"
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
-      | "ConfigIdUpdated"
-      | "DeployedToMoola"
+      | "DeployedToAave"
       | "Deposited"
       | "OwnershipTransferred"
       | "Paused"
@@ -82,7 +78,7 @@ export interface AttestifyVaultInterface extends Interface {
       | "Unpaused"
       | "UserVerified"
       | "Withdrawn"
-      | "WithdrawnFromMoola"
+      | "WithdrawnFromAave"
   ): EventFragment;
 
   encodeFunctionData(
@@ -98,6 +94,8 @@ export interface AttestifyVaultInterface extends Interface {
     functionFragment: "RESERVE_RATIO",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "aavePool", values?: undefined): string;
+  encodeFunctionData(functionFragment: "acUSD", values?: undefined): string;
   encodeFunctionData(functionFragment: "aiAgent", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "balanceOf",
@@ -108,7 +106,6 @@ export interface AttestifyVaultInterface extends Interface {
     functionFragment: "changeStrategy",
     values: [BigNumberish]
   ): string;
-  encodeFunctionData(functionFragment: "configId", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "deposit",
     values: [BigNumberish]
@@ -116,10 +113,6 @@ export interface AttestifyVaultInterface extends Interface {
   encodeFunctionData(
     functionFragment: "emergencyWithdraw",
     values: [AddressLike, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getConfigId",
-    values: [BytesLike, BytesLike, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getCurrentAPY",
@@ -141,11 +134,9 @@ export interface AttestifyVaultInterface extends Interface {
     functionFragment: "lastRebalance",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "mcUSD", values?: undefined): string;
-  encodeFunctionData(functionFragment: "moolaPool", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "onVerificationSuccess",
-    values: [BytesLike, BytesLike]
+    functionFragment: "manualVerifyForTesting",
+    values: [AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(functionFragment: "pause", values?: undefined): string;
@@ -155,14 +146,13 @@ export interface AttestifyVaultInterface extends Interface {
     functionFragment: "renounceOwnership",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "scope", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "selfProtocol",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "setAIAgent",
     values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setConfigId",
-    values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setTreasury",
@@ -201,8 +191,8 @@ export interface AttestifyVaultInterface extends Interface {
   ): string;
   encodeFunctionData(functionFragment: "users", values: [AddressLike]): string;
   encodeFunctionData(
-    functionFragment: "verifySelfProof",
-    values: [BytesLike, BytesLike]
+    functionFragment: "verifyIdentity",
+    values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "withdraw",
@@ -222,6 +212,8 @@ export interface AttestifyVaultInterface extends Interface {
     functionFragment: "RESERVE_RATIO",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "aavePool", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "acUSD", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "aiAgent", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "cUSD", data: BytesLike): Result;
@@ -229,14 +221,9 @@ export interface AttestifyVaultInterface extends Interface {
     functionFragment: "changeStrategy",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "configId", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "deposit", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "emergencyWithdraw",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getConfigId",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -256,10 +243,8 @@ export interface AttestifyVaultInterface extends Interface {
     functionFragment: "lastRebalance",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "mcUSD", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "moolaPool", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "onVerificationSuccess",
+    functionFragment: "manualVerifyForTesting",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
@@ -270,12 +255,11 @@ export interface AttestifyVaultInterface extends Interface {
     functionFragment: "renounceOwnership",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "scope", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "setAIAgent", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "setConfigId",
+    functionFragment: "selfProtocol",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "setAIAgent", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "setTreasury",
     data: BytesLike
@@ -310,25 +294,13 @@ export interface AttestifyVaultInterface extends Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "users", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "verifySelfProof",
+    functionFragment: "verifyIdentity",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 }
 
-export namespace ConfigIdUpdatedEvent {
-  export type InputTuple = [newConfigId: BytesLike];
-  export type OutputTuple = [newConfigId: string];
-  export interface OutputObject {
-    newConfigId: string;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace DeployedToMoolaEvent {
+export namespace DeployedToAaveEvent {
   export type InputTuple = [amount: BigNumberish, timestamp: BigNumberish];
   export type OutputTuple = [amount: bigint, timestamp: bigint];
   export interface OutputObject {
@@ -386,17 +358,17 @@ export namespace PausedEvent {
 
 export namespace RebalancedEvent {
   export type InputTuple = [
-    moolaBalance: BigNumberish,
+    aaveBalance: BigNumberish,
     reserveBalance: BigNumberish,
     timestamp: BigNumberish
   ];
   export type OutputTuple = [
-    moolaBalance: bigint,
+    aaveBalance: bigint,
     reserveBalance: bigint,
     timestamp: bigint
   ];
   export interface OutputObject {
-    moolaBalance: bigint;
+    aaveBalance: bigint;
     reserveBalance: bigint;
     timestamp: bigint;
   }
@@ -441,19 +413,10 @@ export namespace UnpausedEvent {
 }
 
 export namespace UserVerifiedEvent {
-  export type InputTuple = [
-    user: AddressLike,
-    userIdentifier: BigNumberish,
-    timestamp: BigNumberish
-  ];
-  export type OutputTuple = [
-    user: string,
-    userIdentifier: bigint,
-    timestamp: bigint
-  ];
+  export type InputTuple = [user: AddressLike, timestamp: BigNumberish];
+  export type OutputTuple = [user: string, timestamp: bigint];
   export interface OutputObject {
     user: string;
-    userIdentifier: bigint;
     timestamp: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -480,7 +443,7 @@ export namespace WithdrawnEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace WithdrawnFromMoolaEvent {
+export namespace WithdrawnFromAaveEvent {
   export type InputTuple = [amount: BigNumberish, timestamp: BigNumberish];
   export type OutputTuple = [amount: bigint, timestamp: bigint];
   export interface OutputObject {
@@ -544,6 +507,10 @@ export interface AttestifyVault extends BaseContract {
 
   RESERVE_RATIO: TypedContractMethod<[], [bigint], "view">;
 
+  aavePool: TypedContractMethod<[], [string], "view">;
+
+  acUSD: TypedContractMethod<[], [string], "view">;
+
   aiAgent: TypedContractMethod<[], [string], "view">;
 
   balanceOf: TypedContractMethod<[user: AddressLike], [bigint], "view">;
@@ -556,24 +523,12 @@ export interface AttestifyVault extends BaseContract {
     "nonpayable"
   >;
 
-  configId: TypedContractMethod<[], [string], "view">;
-
   deposit: TypedContractMethod<[assets: BigNumberish], [bigint], "nonpayable">;
 
   emergencyWithdraw: TypedContractMethod<
     [token: AddressLike, amount: BigNumberish],
     [void],
     "nonpayable"
-  >;
-
-  getConfigId: TypedContractMethod<
-    [
-      destinationChainId: BytesLike,
-      userIdentifier: BytesLike,
-      userDefinedData: BytesLike
-    ],
-    [string],
-    "view"
   >;
 
   getCurrentAPY: TypedContractMethod<[], [bigint], "view">;
@@ -587,7 +542,7 @@ export interface AttestifyVault extends BaseContract {
         _totalAssets: bigint;
         _totalShares: bigint;
         reserveBalance: bigint;
-        moolaBalance: bigint;
+        aaveBalance: bigint;
         _totalDeposited: bigint;
         _totalWithdrawn: bigint;
       }
@@ -599,12 +554,8 @@ export interface AttestifyVault extends BaseContract {
 
   lastRebalance: TypedContractMethod<[], [bigint], "view">;
 
-  mcUSD: TypedContractMethod<[], [string], "view">;
-
-  moolaPool: TypedContractMethod<[], [string], "view">;
-
-  onVerificationSuccess: TypedContractMethod<
-    [output: BytesLike, userData: BytesLike],
+  manualVerifyForTesting: TypedContractMethod<
+    [user: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -619,16 +570,10 @@ export interface AttestifyVault extends BaseContract {
 
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
-  scope: TypedContractMethod<[], [bigint], "view">;
+  selfProtocol: TypedContractMethod<[], [string], "view">;
 
   setAIAgent: TypedContractMethod<
     [_aiAgent: AddressLike],
-    [void],
-    "nonpayable"
-  >;
-
-  setConfigId: TypedContractMethod<
-    [_configId: BytesLike],
     [void],
     "nonpayable"
   >;
@@ -646,7 +591,7 @@ export interface AttestifyVault extends BaseContract {
     [
       [string, bigint, bigint, bigint, bigint, boolean] & {
         name: string;
-        moolaAllocation: bigint;
+        aaveAllocation: bigint;
         reserveAllocation: bigint;
         targetAPY: bigint;
         riskLevel: bigint;
@@ -679,23 +624,18 @@ export interface AttestifyVault extends BaseContract {
   users: TypedContractMethod<
     [arg0: AddressLike],
     [
-      [boolean, bigint, bigint, bigint, bigint, bigint] & {
+      [boolean, bigint, bigint, bigint, bigint] & {
         isVerified: boolean;
         verifiedAt: bigint;
         totalDeposited: bigint;
         totalWithdrawn: bigint;
         lastActionTime: bigint;
-        userIdentifier: bigint;
       }
     ],
     "view"
   >;
 
-  verifySelfProof: TypedContractMethod<
-    [proofPayload: BytesLike, userContextData: BytesLike],
-    [void],
-    "nonpayable"
-  >;
+  verifyIdentity: TypedContractMethod<[proof: BytesLike], [void], "nonpayable">;
 
   withdraw: TypedContractMethod<[assets: BigNumberish], [bigint], "nonpayable">;
 
@@ -716,6 +656,12 @@ export interface AttestifyVault extends BaseContract {
     nameOrSignature: "RESERVE_RATIO"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "aavePool"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "acUSD"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "aiAgent"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -728,9 +674,6 @@ export interface AttestifyVault extends BaseContract {
     nameOrSignature: "changeStrategy"
   ): TypedContractMethod<[newStrategy: BigNumberish], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "configId"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
     nameOrSignature: "deposit"
   ): TypedContractMethod<[assets: BigNumberish], [bigint], "nonpayable">;
   getFunction(
@@ -739,17 +682,6 @@ export interface AttestifyVault extends BaseContract {
     [token: AddressLike, amount: BigNumberish],
     [void],
     "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "getConfigId"
-  ): TypedContractMethod<
-    [
-      destinationChainId: BytesLike,
-      userIdentifier: BytesLike,
-      userDefinedData: BytesLike
-    ],
-    [string],
-    "view"
   >;
   getFunction(
     nameOrSignature: "getCurrentAPY"
@@ -766,7 +698,7 @@ export interface AttestifyVault extends BaseContract {
         _totalAssets: bigint;
         _totalShares: bigint;
         reserveBalance: bigint;
-        moolaBalance: bigint;
+        aaveBalance: bigint;
         _totalDeposited: bigint;
         _totalWithdrawn: bigint;
       }
@@ -780,18 +712,8 @@ export interface AttestifyVault extends BaseContract {
     nameOrSignature: "lastRebalance"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
-    nameOrSignature: "mcUSD"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "moolaPool"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "onVerificationSuccess"
-  ): TypedContractMethod<
-    [output: BytesLike, userData: BytesLike],
-    [void],
-    "nonpayable"
-  >;
+    nameOrSignature: "manualVerifyForTesting"
+  ): TypedContractMethod<[user: AddressLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
@@ -808,14 +730,11 @@ export interface AttestifyVault extends BaseContract {
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "scope"
-  ): TypedContractMethod<[], [bigint], "view">;
+    nameOrSignature: "selfProtocol"
+  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "setAIAgent"
   ): TypedContractMethod<[_aiAgent: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setConfigId"
-  ): TypedContractMethod<[_configId: BytesLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "setTreasury"
   ): TypedContractMethod<[_treasury: AddressLike], [void], "nonpayable">;
@@ -829,7 +748,7 @@ export interface AttestifyVault extends BaseContract {
     [
       [string, bigint, bigint, bigint, bigint, boolean] & {
         name: string;
-        moolaAllocation: bigint;
+        aaveAllocation: bigint;
         reserveAllocation: bigint;
         targetAPY: bigint;
         riskLevel: bigint;
@@ -867,41 +786,29 @@ export interface AttestifyVault extends BaseContract {
   ): TypedContractMethod<
     [arg0: AddressLike],
     [
-      [boolean, bigint, bigint, bigint, bigint, bigint] & {
+      [boolean, bigint, bigint, bigint, bigint] & {
         isVerified: boolean;
         verifiedAt: bigint;
         totalDeposited: bigint;
         totalWithdrawn: bigint;
         lastActionTime: bigint;
-        userIdentifier: bigint;
       }
     ],
     "view"
   >;
   getFunction(
-    nameOrSignature: "verifySelfProof"
-  ): TypedContractMethod<
-    [proofPayload: BytesLike, userContextData: BytesLike],
-    [void],
-    "nonpayable"
-  >;
+    nameOrSignature: "verifyIdentity"
+  ): TypedContractMethod<[proof: BytesLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "withdraw"
   ): TypedContractMethod<[assets: BigNumberish], [bigint], "nonpayable">;
 
   getEvent(
-    key: "ConfigIdUpdated"
+    key: "DeployedToAave"
   ): TypedContractEvent<
-    ConfigIdUpdatedEvent.InputTuple,
-    ConfigIdUpdatedEvent.OutputTuple,
-    ConfigIdUpdatedEvent.OutputObject
-  >;
-  getEvent(
-    key: "DeployedToMoola"
-  ): TypedContractEvent<
-    DeployedToMoolaEvent.InputTuple,
-    DeployedToMoolaEvent.OutputTuple,
-    DeployedToMoolaEvent.OutputObject
+    DeployedToAaveEvent.InputTuple,
+    DeployedToAaveEvent.OutputTuple,
+    DeployedToAaveEvent.OutputObject
   >;
   getEvent(
     key: "Deposited"
@@ -960,34 +867,23 @@ export interface AttestifyVault extends BaseContract {
     WithdrawnEvent.OutputObject
   >;
   getEvent(
-    key: "WithdrawnFromMoola"
+    key: "WithdrawnFromAave"
   ): TypedContractEvent<
-    WithdrawnFromMoolaEvent.InputTuple,
-    WithdrawnFromMoolaEvent.OutputTuple,
-    WithdrawnFromMoolaEvent.OutputObject
+    WithdrawnFromAaveEvent.InputTuple,
+    WithdrawnFromAaveEvent.OutputTuple,
+    WithdrawnFromAaveEvent.OutputObject
   >;
 
   filters: {
-    "ConfigIdUpdated(bytes32)": TypedContractEvent<
-      ConfigIdUpdatedEvent.InputTuple,
-      ConfigIdUpdatedEvent.OutputTuple,
-      ConfigIdUpdatedEvent.OutputObject
+    "DeployedToAave(uint256,uint256)": TypedContractEvent<
+      DeployedToAaveEvent.InputTuple,
+      DeployedToAaveEvent.OutputTuple,
+      DeployedToAaveEvent.OutputObject
     >;
-    ConfigIdUpdated: TypedContractEvent<
-      ConfigIdUpdatedEvent.InputTuple,
-      ConfigIdUpdatedEvent.OutputTuple,
-      ConfigIdUpdatedEvent.OutputObject
-    >;
-
-    "DeployedToMoola(uint256,uint256)": TypedContractEvent<
-      DeployedToMoolaEvent.InputTuple,
-      DeployedToMoolaEvent.OutputTuple,
-      DeployedToMoolaEvent.OutputObject
-    >;
-    DeployedToMoola: TypedContractEvent<
-      DeployedToMoolaEvent.InputTuple,
-      DeployedToMoolaEvent.OutputTuple,
-      DeployedToMoolaEvent.OutputObject
+    DeployedToAave: TypedContractEvent<
+      DeployedToAaveEvent.InputTuple,
+      DeployedToAaveEvent.OutputTuple,
+      DeployedToAaveEvent.OutputObject
     >;
 
     "Deposited(address,uint256,uint256)": TypedContractEvent<
@@ -1056,7 +952,7 @@ export interface AttestifyVault extends BaseContract {
       UnpausedEvent.OutputObject
     >;
 
-    "UserVerified(address,uint256,uint256)": TypedContractEvent<
+    "UserVerified(address,uint256)": TypedContractEvent<
       UserVerifiedEvent.InputTuple,
       UserVerifiedEvent.OutputTuple,
       UserVerifiedEvent.OutputObject
@@ -1078,15 +974,15 @@ export interface AttestifyVault extends BaseContract {
       WithdrawnEvent.OutputObject
     >;
 
-    "WithdrawnFromMoola(uint256,uint256)": TypedContractEvent<
-      WithdrawnFromMoolaEvent.InputTuple,
-      WithdrawnFromMoolaEvent.OutputTuple,
-      WithdrawnFromMoolaEvent.OutputObject
+    "WithdrawnFromAave(uint256,uint256)": TypedContractEvent<
+      WithdrawnFromAaveEvent.InputTuple,
+      WithdrawnFromAaveEvent.OutputTuple,
+      WithdrawnFromAaveEvent.OutputObject
     >;
-    WithdrawnFromMoola: TypedContractEvent<
-      WithdrawnFromMoolaEvent.InputTuple,
-      WithdrawnFromMoolaEvent.OutputTuple,
-      WithdrawnFromMoolaEvent.OutputObject
+    WithdrawnFromAave: TypedContractEvent<
+      WithdrawnFromAaveEvent.InputTuple,
+      WithdrawnFromAaveEvent.OutputTuple,
+      WithdrawnFromAaveEvent.OutputObject
     >;
   };
 }
