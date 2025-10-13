@@ -1,0 +1,138 @@
+[
+  {
+    "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
+    "name": "balanceOf",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
+    "name": "getEarnings",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
+    "name": "isVerified",
+    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getCurrentAPY",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MIN_DEPOSIT",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MAX_DEPOSIT",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MAX_TVL",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
+    "name": "shares",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
+    "name": "userStrategy",
+    "outputs": [{"internalType": "uint8", "name": "", "type": "uint8"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint8", "name": "", "type": "uint8"}],
+    "name": "strategies",
+    "outputs": [
+      {"internalType": "string", "name": "name", "type": "string"},
+      {"internalType": "uint8", "name": "moolaAllocation", "type": "uint8"},
+      {"internalType": "uint8", "name": "reserveAllocation", "type": "uint8"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "bytes", "name": "proof", "type": "bytes"}],
+    "name": "verifyIdentity",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
+    "name": "deposit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
+    "name": "withdraw",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint8", "name": "strategy", "type": "uint8"}],
+    "name": "changeStrategy",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "agent", "type": "address"}],
+    "name": "setAIAgent",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "address", "name": "user", "type": "address"},
+      {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"}
+    ],
+    "name": "Deposited",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "address", "name": "user", "type": "address"},
+      {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"}
+    ],
+    "name": "Withdrawn",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "address", "name": "user", "type": "address"},
+      {"indexed": false, "internalType": "bytes", "name": "proof", "type": "bytes"}
+    ],
+    "name": "IdentityVerified",
+    "type": "event"
+  }
+]
