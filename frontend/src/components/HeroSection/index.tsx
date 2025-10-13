@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Shield, ArrowRight, CheckCircle, TrendingUp, DollarSign } from 'lucide-react';
+import { Shield, ArrowRight, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 
 export default function HeroSection() {
@@ -93,7 +93,7 @@ export default function HeroSection() {
             transition={{ duration: 0.6, delay: 0.5 }}
             className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed"
           >
-            Prove you're human <motion.span
+            Prove you&apos;re human <motion.span
               initial={{ scale: 1 }}
               whileHover={{ scale: 1.1 }}
               className="font-semibold text-gray-900 inline-block"
