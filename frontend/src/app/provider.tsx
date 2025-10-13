@@ -3,16 +3,36 @@
 import '@rainbow-me/rainbowkit/styles.css';
 import { getDefaultConfig, RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
-import { celo, celoAlfajores } from 'wagmi/chains';
+import { celo } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http } from 'viem';
+import { defineChain } from 'viem';
+
+// Define Celo Sepolia testnet
+const celoSepolia = defineChain({
+  id: 11142220,
+  name: 'Celo Sepolia',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Sepolia Celo',
+    symbol: 'S-CELO',
+  },
+  rpcUrls: {
+    default: { http: ['https://forno.celo-sepolia.celo-testnet.org'] },
+    public: { http: ['https://forno.celo-sepolia.celo-testnet.org'] },
+  },
+  blockExplorers: {
+    default: { name: 'Celo Sepolia Explorer', url: 'https://celo-sepolia.blockscout.com' },
+  },
+  testnet: true,
+});
 
 const config = getDefaultConfig({
   appName: 'Attestify',
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID',
-  chains: [celoAlfajores, celo],
+  chains: [celoSepolia, celo],
   transports: {
-    [celoAlfajores.id]: http(),
+    [celoSepolia.id]: http(),
     [celo.id]: http(),
   },
   ssr: true,
