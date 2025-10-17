@@ -222,9 +222,12 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
         // Transfer cUSD from user
         cUSD.safeTransferFrom(msg.sender, address(this), assets);
 
-        // Ensure Aave has approval (in case constructor approval failed)
-        if (cUSD.allowance(address(this), address(aavePool)) < assets) {
-            cUSD.approve(address(aavePool), type(uint256).max);
+        // Ensure Aave has approval (safer incremental approval)
+        uint256 currentAllowance = cUSD.allowance(address(this), address(aavePool));
+        if (currentAllowance < assets) {
+            // Use incremental approval instead of unlimited
+            uint256 neededAllowance = assets - currentAllowance;
+            cUSD.approve(address(aavePool), currentAllowance + neededAllowance);
         }
 
         // Deploy to Aave immediately
@@ -365,11 +368,13 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
 
     /**
      * @notice Get current APY
+     * @dev In production, this could fetch real-time APY from Aave
+     * For MVP, returns conservative estimate
      */
     function getCurrentAPY() external view returns (uint256) {
-        // In production, could fetch real-time APY from Aave
-        // For MVP, return target APY
-        return 350; // 3.5%
+        // TODO: Implement real-time APY fetching from Aave
+        // For now, return conservative estimate
+        return 350; // 3.5% (350 basis points)
     }
 
     /* ========== SHARE CONVERSION ========== */
@@ -447,8 +452,10 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
 
     /**
      * @notice Manual verification for testing ONLY (REMOVE IN PRODUCTION!)
+     * @dev This function should be removed before mainnet deployment
      */
     function manualVerifyForTesting(address user) external onlyOwner {
+        // TODO: Remove this function before production deployment
         users[user].isVerified = true;
         users[user].verifiedAt = block.timestamp;
         userStrategy[user] = StrategyType.CONSERVATIVE;
