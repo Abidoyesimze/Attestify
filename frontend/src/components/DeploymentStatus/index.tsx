@@ -9,7 +9,6 @@ interface DeploymentStatusProps {
 
 export default function DeploymentStatus({ className = '' }: DeploymentStatusProps) {
   const [contractDeployed, setContractDeployed] = useState(false);
-  const [deploymentStep, setDeploymentStep] = useState(0);
 
   const deploymentSteps = [
     {
@@ -42,7 +41,6 @@ export default function DeploymentStatus({ className = '' }: DeploymentStatusPro
     // Check if vault contract address is set
     if (CONTRACT_ADDRESSES.celoSepolia.vault) {
       setContractDeployed(true);
-      setDeploymentStep(1);
     }
   }, []);
 

@@ -1,6 +1,6 @@
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { VAULT_CONFIG, CONTRACT_ADDRESSES, STRATEGY_TYPES } from '@/config/contracts';
-import { AttestifyVaultABI } from '@/abis/Vault.json';
+import { ATTESTIFY_VAULT_ABI } from '@/abis';
 
 // Hook for interacting with the AttestifyVault contract
 export function useVault() {
@@ -13,7 +13,7 @@ export function useVault() {
   // Read user's verification status
   const { data: isVerified } = useReadContract({
     address: CONTRACT_ADDRESSES.celoSepolia.vault as `0x${string}`,
-    abi: AttestifyVaultABI,
+    abi: ATTESTIFY_VAULT_ABI,
     functionName: 'isVerified',
     args: address ? [address] : undefined,
     query: { enabled: !!address && !!CONTRACT_ADDRESSES.celoSepolia.vault },
@@ -22,7 +22,7 @@ export function useVault() {
   // Read user's balance
   const { data: userBalance } = useReadContract({
     address: CONTRACT_ADDRESSES.celoSepolia.vault as `0x${string}`,
-    abi: AttestifyVaultABI,
+    abi: ATTESTIFY_VAULT_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
     query: { enabled: !!address && !!CONTRACT_ADDRESSES.celoSepolia.vault },
@@ -31,7 +31,7 @@ export function useVault() {
   // Read user's shares
   const { data: userShares } = useReadContract({
     address: CONTRACT_ADDRESSES.celoSepolia.vault as `0x${string}`,
-    abi: AttestifyVaultABI,
+    abi: ATTESTIFY_VAULT_ABI,
     functionName: 'shares',
     args: address ? [address] : undefined,
     query: { enabled: !!address && !!CONTRACT_ADDRESSES.celoSepolia.vault },
@@ -40,7 +40,7 @@ export function useVault() {
   // Read user's earnings
   const { data: userEarnings } = useReadContract({
     address: CONTRACT_ADDRESSES.celoSepolia.vault as `0x${string}`,
-    abi: AttestifyVaultABI,
+    abi: ATTESTIFY_VAULT_ABI,
     functionName: 'getEarnings',
     args: address ? [address] : undefined,
     query: { enabled: !!address && !!CONTRACT_ADDRESSES.celoSepolia.vault },
@@ -49,7 +49,7 @@ export function useVault() {
   // Read vault statistics
   const { data: vaultStats } = useReadContract({
     address: CONTRACT_ADDRESSES.celoSepolia.vault as `0x${string}`,
-    abi: AttestifyVaultABI,
+    abi: ATTESTIFY_VAULT_ABI,
     functionName: 'getVaultStats',
     query: { enabled: !!CONTRACT_ADDRESSES.celoSepolia.vault },
   });
@@ -57,7 +57,7 @@ export function useVault() {
   // Read current APY
   const { data: currentAPY } = useReadContract({
     address: CONTRACT_ADDRESSES.celoSepolia.vault as `0x${string}`,
-    abi: AttestifyVaultABI,
+    abi: ATTESTIFY_VAULT_ABI,
     functionName: 'getCurrentAPY',
     query: { enabled: !!CONTRACT_ADDRESSES.celoSepolia.vault },
   });
@@ -70,7 +70,7 @@ export function useVault() {
 
     writeContract({
       address: CONTRACT_ADDRESSES.celoSepolia.vault as `0x${string}`,
-      abi: AttestifyVaultABI,
+      abi: ATTESTIFY_VAULT_ABI,
       functionName: 'verifyIdentity',
       args: [proof as `0x${string}`],
     });
@@ -83,7 +83,7 @@ export function useVault() {
 
     writeContract({
       address: CONTRACT_ADDRESSES.celoSepolia.vault as `0x${string}`,
-      abi: AttestifyVaultABI,
+      abi: ATTESTIFY_VAULT_ABI,
       functionName: 'deposit',
       args: [amount],
     });
@@ -96,7 +96,7 @@ export function useVault() {
 
     writeContract({
       address: CONTRACT_ADDRESSES.celoSepolia.vault as `0x${string}`,
-      abi: AttestifyVaultABI,
+      abi: ATTESTIFY_VAULT_ABI,
       functionName: 'withdraw',
       args: [amount],
     });
@@ -109,7 +109,7 @@ export function useVault() {
 
     writeContract({
       address: CONTRACT_ADDRESSES.celoSepolia.vault as `0x${string}`,
-      abi: AttestifyVaultABI,
+      abi: ATTESTIFY_VAULT_ABI,
       functionName: 'changeStrategy',
       args: [strategyType],
     });
@@ -123,7 +123,7 @@ export function useVault() {
 
     writeContract({
       address: CONTRACT_ADDRESSES.celoSepolia.vault as `0x${string}`,
-      abi: AttestifyVaultABI,
+      abi: ATTESTIFY_VAULT_ABI,
       functionName: 'manualVerifyForTesting',
       args: [userAddress as `0x${string}`],
     });
