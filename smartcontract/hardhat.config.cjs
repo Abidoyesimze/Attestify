@@ -3,7 +3,8 @@ require("dotenv").config();
 
 const { PRIVATE_KEY, CELOSCAN_API_KEY, CELO_MAINNET_RPC } = process.env;
 
-const config = {
+/** @type import('hardhat/config').HardhatUserConfig */
+module.exports = {
   solidity: {
     version: "0.8.28",
     settings: {
@@ -18,9 +19,13 @@ const config = {
       forking: {
         url: CELO_MAINNET_RPC || "https://forno.celo.org",
         enabled: true,
+        // Don't specify blockNumber - use latest
       },
       chainId: 42220,
+      hardfork: "cancun", // Force Cancun hardfork
       allowUnlimitedContractSize: true,
+      throwOnTransactionFailures: true,
+      throwOnCallFailures: true,
     },
     localhost: {
       url: "http://127.0.0.1:8545",
@@ -78,5 +83,3 @@ const config = {
     enabled: true,
   },
 };
-
-module.exports = config;
