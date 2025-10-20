@@ -29,7 +29,7 @@ const celoSepolia = defineChain({
 
 const config = getDefaultConfig({
   appName: 'Attestify',
-  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID',
+  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'a69043ecf4dca5c34a5e70fdfeac4558',
   chains: [celoSepolia, celo],
   transports: {
     [celoSepolia.id]: http(),
