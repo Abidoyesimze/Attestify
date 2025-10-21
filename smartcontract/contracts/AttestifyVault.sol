@@ -170,8 +170,6 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
     function verifyIdentity(bytes calldata proof) external {
         require(!users[msg.sender].isVerified, "Already verified");
 
-        
-        
         users[msg.sender].isVerified = true;
         users[msg.sender].verifiedAt = block.timestamp;
         userStrategy[msg.sender] = StrategyType.CONSERVATIVE;
