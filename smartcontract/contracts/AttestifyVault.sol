@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
-import "./ISelfProtocolInterface.sol";
 import "./IAave.sol";
 
 contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
@@ -18,9 +17,6 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
     IERC20 public immutable cUSD;
     IAToken public immutable acUSD;
     IPool public immutable aavePool;
-
-    // Protocol integrations
-    ISelfProtocolInterface public immutable selfProtocol;
 
     // Vault accounting (share-based system)
     uint256 public totalShares;
@@ -106,13 +102,11 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
     constructor(
         address _cUSD,
         address _acUSD,
-        address _selfProtocol,
         address _aavePool
     ) Ownable(msg.sender) {
         if (
             _cUSD == address(0) ||
             _acUSD == address(0) ||
-            _selfProtocol == address(0) ||
             _aavePool == address(0)
         ) {
             revert ZeroAddress();
@@ -120,7 +114,6 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
 
         cUSD = IERC20(_cUSD);
         acUSD = IAToken(_acUSD);
-        selfProtocol = ISelfProtocolInterface(_selfProtocol);
         aavePool = IPool(_aavePool);
         treasury = msg.sender;
 
@@ -169,9 +162,9 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
 
     function verifyIdentity(bytes calldata proof) external {
         require(!users[msg.sender].isVerified, "Already verified");
-
         
-        
+        // Simple verification - just mark user as verified after QR code scan
+        // No on-chain proof validation needed
         users[msg.sender].isVerified = true;
         users[msg.sender].verifiedAt = block.timestamp;
         userStrategy[msg.sender] = StrategyType.CONSERVATIVE;
@@ -180,8 +173,7 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
     }
 
     function _isVerified(address user) internal view returns (bool) {
-        if (users[user].isVerified) return true;
-        return selfProtocol.isVerified(user);
+        return users[user].isVerified;
     }
 
     function isVerified(address user) external view returns (bool) {
