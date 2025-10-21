@@ -2,8 +2,8 @@
 export const CONTRACT_ADDRESSES = {
   // Celo Sepolia Testnet
   celoSepolia: {
-    vault: process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS || '', // Will be set after deployment
-    cUSD: process.env.NEXT_PUBLIC_CUSD_CONTRACT_ADDRESS || '0x765DE816845861e75A25fCA122bb6898B8B1282a',
+    vault: process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS || '0x99dBE4AEa58E518C50a1c04aE9b48C9F6354612f', // Working contract for testing
+    cUSD: process.env.NEXT_PUBLIC_CUSD_CONTRACT_ADDRESS || '0xdE9e4C3ce781b4bA68120d6261cbad65ce0aB00b', // Real Celo Sepolia cUSD
     acUSD: process.env.NEXT_PUBLIC_ACUSD_CONTRACT_ADDRESS || '0xBba98352628B0B0c4b40583F593fFCb630935a45',
     aavePool: process.env.NEXT_PUBLIC_AAVE_POOL_ADDRESS || '0x3E59A31363E2ad014dcbc521c4a0d5757d9f3402',
     selfProtocol: process.env.NEXT_PUBLIC_SELF_PROTOCOL_ADDRESS || '0x16ECBA51e18a4a7e61fdC417f0d47AFEeDfbed74',
