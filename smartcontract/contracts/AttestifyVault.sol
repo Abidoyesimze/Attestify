@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
-import "./ISelfProtocol.sol";
+import "./ISelfProtocolInterface.sol";
 import "./IAave.sol";
 
 contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
@@ -20,7 +20,7 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
     IPool public immutable aavePool;
 
     // Protocol integrations
-    ISelfProtocol public immutable selfProtocol;
+    ISelfProtocolInterface public immutable selfProtocol;
 
     // Vault accounting (share-based system)
     uint256 public totalShares;
@@ -120,7 +120,7 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
 
         cUSD = IERC20(_cUSD);
         acUSD = IAToken(_acUSD);
-        selfProtocol = ISelfProtocol(_selfProtocol);
+        selfProtocol = ISelfProtocolInterface(_selfProtocol);
         aavePool = IPool(_aavePool);
         treasury = msg.sender;
 
