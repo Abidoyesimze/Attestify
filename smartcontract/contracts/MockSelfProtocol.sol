@@ -20,10 +20,9 @@ contract MockSelfProtocol is Ownable {
     /**
      * @notice Mock verification function
      * @param proof The proof to verify
-     * @return isValid Whether the proof is valid
+     * @return Whether the proof is valid
      */
-    function verify(bytes calldata proof) external view returns (bool isValid) {
-        // For testing: accept all non-empty proofs if acceptAllProofs is true
+    function verify(bytes calldata proof) external view returns (bool) {
         if (acceptAllProofs && proof.length > 0) {
             return true;
         }
@@ -33,9 +32,9 @@ contract MockSelfProtocol is Ownable {
     /**
      * @notice Check if user is verified
      * @param user The user address to check
-     * @return isVerified Whether the user is verified
+     * @return Whether the user is verified
      */
-    function isVerified(address user) external view returns (bool isVerified) {
+    function isVerified(address user) external view returns (bool) {
         return verifiedUsers[user];
     }
 
@@ -79,7 +78,7 @@ contract MockSelfProtocol is Ownable {
     /**
      * @notice Get verification timestamp (mock - returns current timestamp if verified)
      * @param user The address to check
-     * @return uint256 Timestamp of verification (0 if not verified)
+     * @return Timestamp of verification (0 if not verified)
      */
     function getVerificationTime(address user) external view returns (uint256) {
         return verifiedUsers[user] ? block.timestamp : 0;
