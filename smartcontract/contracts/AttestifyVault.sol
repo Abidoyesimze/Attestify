@@ -6,9 +6,17 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@selfxyz/contracts/contracts/abstract/SelfVerificationRoot.sol";
+import "@selfxyz/contracts/contracts/interfaces/ISelfVerificationRoot.sol";
+import "@selfxyz/contracts/contracts/libraries/SelfStructs.sol";
 import "./IAave.sol";
 
-contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
+contract AttestifyVault is
+    SelfVerificationRoot,
+    Ownable,
+    ReentrancyGuard,
+    Pausable
+{
     using SafeERC20 for IERC20;
 
     /* ========== STATE VARIABLES ========== */
@@ -16,7 +24,12 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
     // Token contracts
     IERC20 public immutable cUSD;
     IAToken public immutable acUSD;
+
+    // Protocol integrations
     IPool public immutable aavePool;
+
+    // Self Protocol configuration
+    bytes32 public configId;
 
     // Vault accounting (share-based system)
     uint256 public totalShares;
@@ -31,9 +44,9 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
 
     // Limits and config
     uint256 public constant MIN_DEPOSIT = 1e18; // 1 cUSD
-    uint256 public constant MAX_DEPOSIT = 10_000e18; // 10,000 cUSD per tx
-    uint256 public constant MAX_TVL = 100_000e18; // 100,000 cUSD total (MVP)
-    uint256 public constant RESERVE_RATIO = 10; // Keep 10% liquid for instant withdrawals
+    uint256 public constant MAX_DEPOSIT = 10_000e18;
+    uint256 public constant MAX_TVL = 100_000e18;
+    uint256 public constant RESERVE_RATIO = 10;
 
     // Admin addresses
     address public aiAgent;
@@ -52,26 +65,31 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
         uint256 totalDeposited;
         uint256 totalWithdrawn;
         uint256 lastActionTime;
+        uint256 userIdentifier; // From Self Protocol
     }
 
     enum StrategyType {
-        CONSERVATIVE, // 100% Aave (safest)
-        BALANCED, // 90% Aave, 10% reserve
-        GROWTH // 80% Aave, 20% for future opportunities
+        CONSERVATIVE,
+        BALANCED,
+        GROWTH
     }
 
     struct Strategy {
         string name;
-        uint8 aaveAllocation; // % to deploy to Aave
-        uint8 reserveAllocation; // % to keep liquid
-        uint16 targetAPY; // Expected APY in basis points
-        uint8 riskLevel; // 1-10
+        uint8 aaveAllocation;
+        uint8 reserveAllocation;
+        uint16 targetAPY;
+        uint8 riskLevel;
         bool isActive;
     }
 
     /* ========== EVENTS ========== */
 
-    event UserVerified(address indexed user, uint256 timestamp);
+    event UserVerified(
+        address indexed user,
+        uint256 userIdentifier,
+        uint256 timestamp
+    );
     event Deposited(address indexed user, uint256 assets, uint256 shares);
     event Withdrawn(address indexed user, uint256 assets, uint256 shares);
     event StrategyChanged(
@@ -86,6 +104,7 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
         uint256 reserveBalance,
         uint256 timestamp
     );
+    event ConfigIdUpdated(bytes32 newConfigId);
 
     /* ========== ERRORS ========== */
 
@@ -96,17 +115,21 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
     error InsufficientShares();
     error InsufficientLiquidity();
     error ZeroAddress();
+    error ConfigNotSet();
 
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
         address _cUSD,
         address _acUSD,
-        address _aavePool
-    ) Ownable(msg.sender) {
+        address _selfProtocolHub,
+        address _aavePool,
+        string memory _scopeSeed
+    ) SelfVerificationRoot(_selfProtocolHub, _scopeSeed) Ownable(msg.sender) {
         if (
             _cUSD == address(0) ||
             _acUSD == address(0) ||
+            _selfProtocolHub == address(0) ||
             _aavePool == address(0)
         ) {
             revert ZeroAddress();
@@ -127,7 +150,7 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
             name: "Conservative",
             aaveAllocation: 100,
             reserveAllocation: 0,
-            targetAPY: 350, // 3.5% (conservative estimate)
+            targetAPY: 350,
             riskLevel: 1,
             isActive: true
         });
@@ -145,16 +168,59 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
             name: "Growth",
             aaveAllocation: 80,
             reserveAllocation: 20,
-            targetAPY: 350, // Same APY, but more reserve for opportunities
+            targetAPY: 350,
             riskLevel: 5,
             isActive: true
         });
     }
 
+    /* ========== SELF PROTOCOL INTEGRATION ========== */
+
+    /**
+     * @notice Required override: Return the configuration ID for verification
+     */
+    function getConfigId(
+        bytes32 destinationChainId,
+        bytes32 userIdentifier,
+        bytes memory userDefinedData
+    ) public view override returns (bytes32) {
+        if (configId == bytes32(0)) revert ConfigNotSet();
+        return configId;
+    }
+
+    /**
+     * @notice Set the Self Protocol configuration ID
+     * @dev Must be called after deployment with ID from tools.self.xyz
+     */
+    function setConfigId(bytes32 _configId) external onlyOwner {
+        require(_configId != bytes32(0), "Invalid config ID");
+        configId = _configId;
+        emit ConfigIdUpdated(_configId);
+    }
+
+    /**
+     * @notice Hook called after successful verification
+     * @dev Override from SelfVerificationRoot
+     */
+    function customVerificationHook(
+        ISelfVerificationRoot.GenericDiscloseOutputV2 memory output,
+        bytes memory userData
+    ) internal virtual override {
+        // Mark user as verified
+        users[msg.sender].isVerified = true;
+        users[msg.sender].verifiedAt = block.timestamp;
+        users[msg.sender].userIdentifier = output.userIdentifier;
+
+        // Set default strategy
+        userStrategy[msg.sender] = StrategyType.CONSERVATIVE;
+
+        emit UserVerified(msg.sender, output.userIdentifier, block.timestamp);
+    }
+
     /* ========== MODIFIERS ========== */
 
     modifier onlyVerified() {
-        if (!_isVerified(msg.sender)) revert NotVerified();
+        if (!users[msg.sender].isVerified) revert NotVerified();
         _;
     }
 
@@ -162,7 +228,7 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
 
     function verifyIdentity(bytes calldata proof) external {
         require(!users[msg.sender].isVerified, "Already verified");
-
+        
         // Simple verification - just mark user as verified after QR code scan
         // No on-chain proof validation needed
         users[msg.sender].isVerified = true;
@@ -176,17 +242,8 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
         return users[user].isVerified;
     }
 
-    function isVerified(address user) external view returns (bool) {
-        return _isVerified(user);
-    }
-
     /* ========== CORE FUNCTIONS: DEPOSIT ========== */
 
-    /**
-     * @notice Deposit cUSD and earn yield from Aave
-     * @param assets Amount of cUSD to deposit
-     * @return sharesIssued Amount of vault shares received
-     */
     function deposit(
         uint256 assets
     )
@@ -200,45 +257,36 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
         if (assets > MAX_DEPOSIT) revert ExceedsMaxDeposit();
         if (totalAssets() + assets > MAX_TVL) revert ExceedsMaxTVL();
 
-        // Calculate shares to issue
         sharesIssued = _convertToShares(assets);
 
-        // Update state
         shares[msg.sender] += sharesIssued;
         totalShares += sharesIssued;
         users[msg.sender].totalDeposited += assets;
         users[msg.sender].lastActionTime = block.timestamp;
         totalDeposited += assets;
 
-        // Transfer cUSD from user
         cUSD.safeTransferFrom(msg.sender, address(this), assets);
-
-        // Ensure Aave has approval (safer incremental approval)
-        uint256 currentAllowance = cUSD.allowance(
-            address(this),
-            address(aavePool)
-        );
-        if (currentAllowance < assets) {
-            // Use incremental approval instead of unlimited
-            uint256 neededAllowance = assets - currentAllowance;
-            cUSD.approve(address(aavePool), currentAllowance + neededAllowance);
-        }
-
-        // Deploy to Aave immediately
         _deployToAave(assets);
 
         emit Deposited(msg.sender, assets, sharesIssued);
     }
 
-    /**
-     * @notice Deploy cUSD to Aave to earn interest
-     * @param amount Amount to deploy
-     */
     function _deployToAave(uint256 amount) internal {
         uint256 reserveAmount = (amount * RESERVE_RATIO) / 100;
         uint256 deployAmount = amount - reserveAmount;
 
         if (deployAmount > 0) {
+            // Ensure Aave has approval (safer incremental approval)
+            uint256 currentAllowance = cUSD.allowance(
+                address(this),
+                address(aavePool)
+            );
+            if (currentAllowance < deployAmount) {
+                // Use incremental approval instead of unlimited
+                uint256 neededAllowance = deployAmount - currentAllowance;
+                cUSD.approve(address(aavePool), currentAllowance + neededAllowance);
+            }
+
             // Supply to Aave (receives acUSD in return)
             aavePool.supply(
                 address(cUSD),
@@ -253,11 +301,6 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
 
     /* ========== CORE FUNCTIONS: WITHDRAW ========== */
 
-    /**
-     * @notice Withdraw cUSD (redeems from Aave if needed)
-     * @param assets Amount of cUSD to withdraw
-     * @return sharesBurned Amount of shares burned
-     */
     function withdraw(
         uint256 assets
     ) external nonReentrant returns (uint256 sharesBurned) {
@@ -265,32 +308,24 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
 
         if (shares[msg.sender] < sharesBurned) revert InsufficientShares();
 
-        // Update state BEFORE external calls
         shares[msg.sender] -= sharesBurned;
         totalShares -= sharesBurned;
         users[msg.sender].totalWithdrawn += assets;
         users[msg.sender].lastActionTime = block.timestamp;
         totalWithdrawn += assets;
 
-        // Check if we need to withdraw from Aave
         uint256 reserveBalance = cUSD.balanceOf(address(this));
 
         if (reserveBalance < assets) {
-            // Need to withdraw from Aave
             uint256 shortfall = assets - reserveBalance;
             _withdrawFromAave(shortfall);
         }
 
-        // Transfer cUSD to user
         cUSD.safeTransfer(msg.sender, assets);
 
         emit Withdrawn(msg.sender, assets, sharesBurned);
     }
 
-    /**
-     * @notice Withdraw from Aave
-     * @param amount Amount needed
-     */
     function _withdrawFromAave(uint256 amount) internal {
         // Withdraw from Aave (burns acUSD, returns cUSD)
         uint256 withdrawn = aavePool.withdraw(
@@ -304,26 +339,16 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
 
     /* ========== VIEW FUNCTIONS ========== */
 
-    /**
-     * @notice Get total assets under management (reserve + Aave)
-     * @return uint256 Total cUSD value
-     */
     function totalAssets() public view returns (uint256) {
         uint256 reserveBalance = cUSD.balanceOf(address(this));
         uint256 aaveBalance = acUSD.balanceOf(address(this));
         return reserveBalance + aaveBalance;
     }
 
-    /**
-     * @notice Get user's current balance in cUSD (including yield)
-     */
     function balanceOf(address user) external view returns (uint256) {
         return _convertToAssets(shares[user]);
     }
 
-    /**
-     * @notice Get user's total earnings
-     */
     function getEarnings(address user) external view returns (uint256) {
         uint256 currentBalance = _convertToAssets(shares[user]);
         uint256 deposited = users[user].totalDeposited;
@@ -335,9 +360,6 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
         return 0;
     }
 
-    /**
-     * @notice Get vault statistics
-     */
     function getVaultStats()
         external
         view
@@ -360,15 +382,8 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
         );
     }
 
-    /**
-     * @notice Get current APY
-     * @dev In production, this could fetch real-time APY from Aave
-     * For MVP, returns conservative estimate
-     */
     function getCurrentAPY() external view returns (uint256) {
-        // TODO: Implement real-time APY fetching from Aave
-        // For now, return conservative estimate
-        return 350; // 3.5% (350 basis points)
+        return 350;
     }
 
     /* ========== SHARE CONVERSION ========== */
@@ -397,10 +412,6 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
 
     /* ========== ADMIN FUNCTIONS ========== */
 
-    /**
-     * @notice Rebalance vault (maintain target reserve ratio)
-     * @dev Can be called by owner or AI agent
-     */
     function rebalance() external {
         require(msg.sender == owner() || msg.sender == aiAgent, "Unauthorized");
 
@@ -409,11 +420,9 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
         uint256 currentReserve = cUSD.balanceOf(address(this));
 
         if (currentReserve < targetReserve) {
-            // Withdraw from Aave to meet reserve target
             uint256 needed = targetReserve - currentReserve;
             _withdrawFromAave(needed);
         } else if (currentReserve > targetReserve * 2) {
-            // Too much reserve, deploy excess to Aave
             uint256 excess = currentReserve - targetReserve;
             _deployToAave(excess);
         }
@@ -444,22 +453,6 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
         _unpause();
     }
 
-    /**
-     * @notice Manual verification for testing ONLY (REMOVE IN PRODUCTION!)
-     * @dev This function should be removed before mainnet deployment
-     */
-    function manualVerifyForTesting(address user) external onlyOwner {
-        // TODO: Remove this function before production deployment
-        users[user].isVerified = true;
-        users[user].verifiedAt = block.timestamp;
-        userStrategy[user] = StrategyType.CONSERVATIVE;
-
-        emit UserVerified(user, block.timestamp);
-    }
-
-    /**
-     * @notice Emergency withdraw (only if paused)
-     */
     function emergencyWithdraw(
         address token,
         uint256 amount
