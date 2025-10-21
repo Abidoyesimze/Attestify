@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
-import "./ISelfProtocol.sol";
+import "./ISelfProtocolInterface.sol";
 import "./IAave.sol";
 
 contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
@@ -20,7 +20,7 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
     IPool public immutable aavePool;
 
     // Protocol integrations
-    ISelfProtocol public immutable selfProtocol;
+    ISelfProtocolInterface public immutable selfProtocol;
 
     // Vault accounting (share-based system)
     uint256 public totalShares;
@@ -34,7 +34,7 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
     mapping(StrategyType => Strategy) public strategies;
 
     // Limits and config
-    uint256 public constant MIN_DEPOSIT = 10e18; // 10 cUSD
+    uint256 public constant MIN_DEPOSIT = 1e18; // 1 cUSD
     uint256 public constant MAX_DEPOSIT = 10_000e18; // 10,000 cUSD per tx
     uint256 public constant MAX_TVL = 100_000e18; // 100,000 cUSD total (MVP)
     uint256 public constant RESERVE_RATIO = 10; // Keep 10% liquid for instant withdrawals
@@ -120,7 +120,7 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
 
         cUSD = IERC20(_cUSD);
         acUSD = IAToken(_acUSD);
-        selfProtocol = ISelfProtocol(_selfProtocol);
+        selfProtocol = ISelfProtocolInterface(_selfProtocol);
         aavePool = IPool(_aavePool);
         treasury = msg.sender;
 
@@ -223,7 +223,10 @@ contract AttestifyVault is Ownable, ReentrancyGuard, Pausable {
         cUSD.safeTransferFrom(msg.sender, address(this), assets);
 
         // Ensure Aave has approval (safer incremental approval)
-        uint256 currentAllowance = cUSD.allowance(address(this), address(aavePool));
+        uint256 currentAllowance = cUSD.allowance(
+            address(this),
+            address(aavePool)
+        );
         if (currentAllowance < assets) {
             // Use incremental approval instead of unlimited
             uint256 neededAllowance = assets - currentAllowance;
