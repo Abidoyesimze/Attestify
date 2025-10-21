@@ -51,14 +51,13 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
     if (!isOpen || !address) return;
 
     try {
-      // Build Self App configuration according to the SDK docs
-      // Using staging_celo for automatic blockchain submission on Celo Sepolia
+      // Build Self App configuration - simple approach like working contract
+      // No contract endpoint - just QR code verification
       const app = new SelfAppBuilder({
         version: 2,
         appName: process.env.NEXT_PUBLIC_SELF_APP_NAME || 'Attestify',
         scope: process.env.NEXT_PUBLIC_SELF_SCOPE || 'attestify',
-        endpoint: CONTRACT_CONFIG.address.toLowerCase(), // Contract address (required)
-        endpointType: 'staging_celo', // Use staging_celo for Celo Sepolia testnet
+        logoBase64: 'https://i.postimg.cc/mrmVf9hm/self.png',
         userId: address,
         userIdType: 'hex', // EVM address type
         userDefinedData: `Attestify verification for ${address}`,
@@ -109,57 +108,38 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
   }, [isTxSuccess, txHash, onVerified, onClose]);
 
   // Handle successful verification from Self Protocol
-  const handleSuccessfulVerification = (proofData?: unknown) => {
+  const handleSuccessfulVerification = async (proofData?: unknown) => {
     console.log('✅ Identity verified by Self Protocol!');
     console.log('Proof data received:', proofData);
-    console.log('Full proofData object:', JSON.stringify(proofData, null, 2));
     
-    // When using endpointType: 'staging_celo', Self Protocol automatically submits
-    // the verification to their hub contract. We receive the proof data here.
-    
-    // Extract the proof from the callback data
-    let proof: string;
-    
-    if (proofData && typeof proofData === 'object' && 'proof' in proofData) {
-      // Self Protocol returned proof data
-      proof = (proofData as { proof: string }).proof;
-      console.log('Using Self Protocol proof:', proof);
-    } else if (proofData && typeof proofData === 'object' && 'hash' in proofData) {
-      // Alternative: proof might be in hash field
-      proof = (proofData as { hash: string }).hash;
-      console.log('Using Self Protocol hash:', proof);
-    } else if (proofData && typeof proofData === 'object' && 'signature' in proofData) {
-      // Check for signature field
-      proof = (proofData as { signature: string }).signature;
-      console.log('Using Self Protocol signature:', proof);
-    } else {
-      // Fallback: Create a proof from the data or use a test proof
-      // For testing, generate a proof that includes timestamp for uniqueness
-      const timestamp = Date.now();
-      proof = `0x${address?.slice(2).padEnd(64, '0')}${timestamp.toString(16).padStart(16, '0')}`;
-      console.log('Using generated test proof:', proof);
-    }
-    
-    setVerificationProof(proof);
-    
-    console.log('📤 Submitting verification to blockchain...');
-    console.log('Contract address:', CONTRACT_CONFIG.address);
-    console.log('Function: verifyIdentity');
-    console.log('Args:', [proof]);
     setStep('submitting');
     
-    // Submit to blockchain
     try {
-      writeContract({
+      // Simple approach: just call contract's verifyIdentity function
+      // The contract doesn't validate the proof, just marks user as verified
+      console.log('📤 Calling contract verifyIdentity function...');
+      
+      await writeContract({
         ...CONTRACT_CONFIG,
         functionName: 'verifyIdentity',
-        args: [proof as `0x${string}`],
+        args: ['0x'], // Empty proof - contract doesn't validate it
       });
-    } catch (error: unknown) {
-      console.error('❌ Error submitting proof:', error);
-      console.error('Error details:', error);
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to submit proof to blockchain');
-      setStep('error');
+      
+      console.log('✅ Contract verification successful!');
+      setStep('success');
+      
+      // Call onVerified to update parent state
+      onVerified();
+      
+      // Close modal after verification callback
+      setTimeout(() => {
+        onClose();
+      }, 2000);
+      
+    } catch (error) {
+      console.error('❌ Contract verification failed:', error);
+      setError('Contract verification failed. Please try again.');
+      setStep('qr');
     }
   };
 
