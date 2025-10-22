@@ -27,6 +27,7 @@ import Link from 'next/link';
 import { CONTRACT_CONFIG, CUSD_CONFIG, CONTRACT_ADDRESSES } from '@/abis';
 import VerificationModal from '@/components/VerificationModal';
 import AIChat from '@/components/AIChat';
+import EthersTest from '@/components/EthersTest';
 
 
 
@@ -87,6 +88,15 @@ export default function Dashboard() {
     functionName: 'getCurrentAPY',
     query: {
       enabled: !!address && !!isVerified,
+    },
+  });
+
+  // Check if contract is paused
+  const { data: isPaused } = useReadContract({
+    ...CONTRACT_CONFIG,
+    functionName: 'paused',
+    query: {
+      enabled: !!address,
     },
   });
 
@@ -183,10 +193,10 @@ export default function Dashboard() {
     args: [2],
   });
 
-  const { writeContract: writeApproval, data: approvalHash } = useWriteContract();
-  const { writeContract: writeDeposit, data: depositHash } = useWriteContract();
-  const { writeContract: writeWithdraw, data: withdrawHash } = useWriteContract();
-  const { writeContract: writeStrategyChange, data: strategyHash } = useWriteContract();
+  const { writeContract: writeApproval, data: approvalHash, error: approvalError } = useWriteContract();
+  const { writeContract: writeDeposit, data: depositHash, error: depositError } = useWriteContract();
+  const { writeContract: writeWithdraw, data: withdrawHash, error: withdrawError } = useWriteContract();
+  const { writeContract: writeStrategyChange, data: strategyHash, error: strategyError } = useWriteContract();
 
   // Wait for approval transaction
   const { isSuccess: isApprovalSuccess } = useWaitForTransactionReceipt({
@@ -244,6 +254,30 @@ export default function Dashboard() {
       setTimeout(() => setDepositStep('input'), 3000);
     }
   }, [isDepositSuccess]);
+
+  // Handle deposit error
+  useEffect(() => {
+    if (depositError) {
+      console.error('❌ Deposit failed:', depositError);
+      let errorMessage = 'Transaction failed';
+      
+      if (depositError.message.includes('InvalidAmount')) {
+        errorMessage = 'Amount must be at least 1 cUSD';
+      } else if (depositError.message.includes('NotVerified')) {
+        errorMessage = 'Please verify your identity first';
+      } else if (depositError.message.includes('ExceedsMaxDeposit')) {
+        errorMessage = 'Amount exceeds maximum deposit limit';
+      } else if (depositError.message.includes('ExceedsMaxTVL')) {
+        errorMessage = 'Vault has reached maximum capacity';
+      } else if (depositError.message.includes('insufficient funds')) {
+        errorMessage = 'Insufficient gas or cUSD balance';
+      }
+      
+      setTxError(errorMessage);
+      setDepositStep('error');
+      setTimeout(() => setDepositStep('input'), 5000);
+    }
+  }, [depositError]);
 
   // Handle withdraw success
   useEffect(() => {
@@ -359,6 +393,7 @@ export default function Dashboard() {
         ...CONTRACT_CONFIG,
         functionName: 'deposit',
         args: [amount],
+        gas: 500000n, // Increased gas limit
       });
     } catch (error: unknown) {
       console.error('Deposit error:', error);
@@ -682,13 +717,21 @@ export default function Dashboard() {
                     </div>
 
                     {depositStep === 'input' && (
-                      <button 
-                        onClick={handleDeposit}
-                        disabled={!depositAmount || depositAmount === '0'}
-                        className="w-full px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
-                      >
-                        Deposit
-                      </button>
+                      <>
+                        {isPaused && (
+                          <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <p className="text-sm text-red-800 font-medium">⚠️ Contract is paused</p>
+                            <p className="text-xs text-red-700">Deposits are temporarily disabled</p>
+                          </div>
+                        )}
+                        <button 
+                          onClick={handleDeposit}
+                          disabled={!depositAmount || depositAmount === '0' || isPaused}
+                          className="w-full px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
+                        >
+                          {isPaused ? 'Deposits Paused' : 'Deposit'}
+                        </button>
+                      </>
                     )}
 
                     {depositStep === 'approving' && (
@@ -790,6 +833,15 @@ export default function Dashboard() {
               onStrategyChange={handleStrategyChange}
             />
           )}
+
+          {/* Ethers.js Direct Test Component */}
+          <div className="mt-8 p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <h3 className="text-lg font-semibold mb-4 text-yellow-800">🧪 Ethers.js Direct Test</h3>
+            <p className="text-sm text-yellow-700 mb-4">
+              Test deposit functionality using ethers.js directly to bypass Wagmi gas estimation issues.
+            </p>
+            <EthersTest />
+          </div>
 
           {activeSection === 'strategy' && (
             <div className="flex-1 p-6 overflow-y-auto">
