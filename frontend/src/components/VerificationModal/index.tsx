@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, CheckCircle, AlertCircle, Loader2, X, Smartphone, Monitor } from 'lucide-react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { countries, SelfQRcodeWrapper, SelfAppBuilder, getUniversalLink } from '@selfxyz/qrcode';
-import { CONTRACT_CONFIG } from '@/abis';
+import { CONTRACT_ADDRESSES } from '@/config/contracts';
+import { ATTESTIFY_VAULT_ABI } from '@/abis';
 
 interface VerificationModalProps {
   isOpen: boolean;
@@ -50,15 +51,29 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
   useEffect(() => {
     if (!isOpen || !address) return;
 
+    console.log('🔍 Initializing Self App...');
+    console.log('🔍 Address:', address);
+    console.log('🔍 Contract address:', CONTRACT_ADDRESSES.celoSepolia.vault);
+
     try {
-      // Build Self App configuration - simple approach like working contract
-      // No contract endpoint - just QR code verification
+      // Build Self App configuration - simplified approach
+      // Since our contract doesn't integrate with Self Protocol, we'll just use QR code for UX
+      console.log('🔍 Building Self App with config:');
+      console.log('  - version: 2');
+      console.log('  - appName: Attestify');
+      console.log('  - scope: attestify');
+      console.log('  - userId:', address);
+      console.log('  - endpoint:', CONTRACT_ADDRESSES.celoSepolia.vault);
+      console.log('  - endpointType: staging_celo');
+      
       const app = new SelfAppBuilder({
         version: 2,
         appName: process.env.NEXT_PUBLIC_SELF_APP_NAME || 'Attestify',
         scope: process.env.NEXT_PUBLIC_SELF_SCOPE || 'attestify',
+        endpoint: CONTRACT_ADDRESSES.celoSepolia.vault, // Contract address for staging_celo
         logoBase64: 'https://i.postimg.cc/mrmVf9hm/self.png',
         userId: address,
+        endpointType: 'staging_celo', // Correct type for Celo Sepolia
         userIdType: 'hex', // EVM address type
         userDefinedData: `Attestify verification for ${address}`,
         disclosures: {
@@ -75,13 +90,15 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
         },
       }).build();
 
+      console.log('✅ Self App built successfully:', app);
       setSelfApp(app);
 
       // Generate universal link for mobile users
       const link = getUniversalLink(app);
+      console.log('✅ Universal link generated:', link);
       setUniversalLink(link);
     } catch (error: unknown) {
-      console.error('Failed to initialize Self App:', error);
+      console.error('❌ Failed to initialize Self App:', error);
       setErrorMessage(error instanceof Error ? error.message : 'Failed to initialize verification');
       setStep('error');
     }
@@ -115,31 +132,24 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
     setStep('submitting');
     
     try {
-      // Simple approach: just call contract's verifyIdentity function
+      // Simple approach: just call contract's verifySelfProof function
       // The contract doesn't validate the proof, just marks user as verified
-      console.log('📤 Calling contract verifyIdentity function...');
+      console.log('📤 Calling contract verifySelfProof function...');
+      console.log('Contract address:', CONTRACT_ADDRESSES.celoSepolia.vault);
       
       await writeContract({
-        ...CONTRACT_CONFIG,
-        functionName: 'verifyIdentity',
-        args: ['0x'], // Empty proof - contract doesn't validate it
+        address: CONTRACT_ADDRESSES.celoSepolia.vault as `0x${string}`,
+        abi: ATTESTIFY_VAULT_ABI,
+        functionName: 'verifySelfProof',
+        args: ['0x', '0x'], // Empty proof and user context data - contract doesn't validate them
       });
       
       console.log('✅ Contract verification successful!');
-      setStep('success');
-      
-      // Call onVerified to update parent state
-      onVerified();
-      
-      // Close modal after verification callback
-      setTimeout(() => {
-        onClose();
-      }, 2000);
       
     } catch (error) {
       console.error('❌ Contract verification failed:', error);
-      setError('Contract verification failed. Please try again.');
-      setStep('qr');
+      setErrorMessage('Contract verification failed. Please try again.');
+      setStep('error');
     }
   };
 
@@ -152,8 +162,19 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
 
   // Start verification flow
   const handleStartVerification = (method: 'desktop' | 'mobile') => {
+    console.log('🔍 Starting verification with method:', method);
+    console.log('🔍 Address:', address);
+    console.log('🔍 SelfApp:', selfApp);
+    console.log('🔍 Contract address:', CONTRACT_ADDRESSES.celoSepolia.vault);
+    
     if (!address) {
       setErrorMessage('Please connect your wallet first');
+      setStep('error');
+      return;
+    }
+
+    if (!selfApp) {
+      setErrorMessage('Self App not initialized. Please try again.');
       setStep('error');
       return;
     }
@@ -235,6 +256,13 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
                       <span>Age 18+ and compliance checks</span>
                     </li>
                   </ul>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <p className="text-sm text-yellow-800 font-medium mb-1">🧪 Testing Mode</p>
+                  <p className="text-xs text-yellow-700">
+                    Using Self Protocol staging_celo endpoint. Contract will mark you as verified after successful verification.
+                  </p>
                 </div>
 
                 <div className="bg-gray-50 rounded-lg p-4">

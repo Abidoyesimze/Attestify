@@ -338,7 +338,7 @@ After the first verification:
 1. **Check Contract Deployment**
    ```bash
    # Verify contract is deployed on Celo Sepolia
-   https://celo-sepolia.blockscout.com/address/0x99dBE4AEa58E518C50a1c04aE9b48C9F6354612f
+   https://celo-sepolia.blockscout.com/address/0xe416e2130C68Adc241B6f609B1B35d878ea5A56A
    ```
 
 2. **Check Transaction**

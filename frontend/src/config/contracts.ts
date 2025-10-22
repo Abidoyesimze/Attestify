@@ -2,7 +2,7 @@
 export const CONTRACT_ADDRESSES = {
   // Celo Sepolia Testnet
   celoSepolia: {
-    vault: process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS || '0x99dBE4AEa58E518C50a1c04aE9b48C9F6354612f', // Working contract for testing
+    vault: process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS || '0x02929f7b33e39acA574BE268552181370f728980', // New simplified contract
     cUSD: process.env.NEXT_PUBLIC_CUSD_CONTRACT_ADDRESS || '0xdE9e4C3ce781b4bA68120d6261cbad65ce0aB00b', // Real Celo Sepolia cUSD
     acUSD: process.env.NEXT_PUBLIC_ACUSD_CONTRACT_ADDRESS || '0xBba98352628B0B0c4b40583F593fFCb630935a45',
     aavePool: process.env.NEXT_PUBLIC_AAVE_POOL_ADDRESS || '0x3E59A31363E2ad014dcbc521c4a0d5757d9f3402',
@@ -51,7 +51,7 @@ export const APP_CONFIG = {
 
 // Vault configuration
 export const VAULT_CONFIG = {
-  minDeposit: '10', // 10 cUSD
+  minDeposit: '1', // 1 cUSD
   maxDeposit: '10000', // 10,000 cUSD per transaction
   maxTVL: '100000', // 100,000 cUSD total (MVP)
   reserveRatio: 10, // 10% kept liquid for withdrawals

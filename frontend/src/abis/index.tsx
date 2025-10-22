@@ -2,7 +2,7 @@ import VaultABI from './Vault.json';
 
 // Contract addresses
 export const CONTRACT_ADDRESSES = {
-  ATTESTIFY_VAULT: "0x99dBE4AEa58E518C50a1c04aE9b48C9F6354612f" as `0x${string}`, // Working contract for testing
+  ATTESTIFY_VAULT: "0x02929f7b33e39acA574BE268552181370f728980" as `0x${string}`, // New simplified contract
   CUSD_TOKEN: "0xdE9e4C3ce781b4bA68120d6261cbad65ce0aB00b" as `0x${string}`, // Real Celo Sepolia cUSD
 } as const;
 
@@ -10,7 +10,7 @@ export const CONTRACT_ADDRESSES = {
 export const SELF_PROTOCOL_CONFIG_ID = "0x986751c577aa5cfaef6f49fa2a46fa273b04e1bf78250966b8037dccf8afd399";
 
 // Import ABI from JSON file
-export const ATTESTIFY_VAULT_ABI = VaultABI;
+export const ATTESTIFY_VAULT_ABI = VaultABI.abi;
 
 // ERC20 Token ABI (for cUSD approval and balance checks)
 export const ERC20_ABI = [

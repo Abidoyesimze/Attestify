@@ -6,13 +6,9 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
-import "@selfxyz/contracts/contracts/abstract/SelfVerificationRoot.sol";
-import "@selfxyz/contracts/contracts/interfaces/ISelfVerificationRoot.sol";
-import "@selfxyz/contracts/contracts/libraries/SelfStructs.sol";
 import "./IAave.sol";
 
 contract AttestifyVault is
-    SelfVerificationRoot,
     Ownable,
     ReentrancyGuard,
     Pausable
@@ -27,9 +23,6 @@ contract AttestifyVault is
 
     // Protocol integrations
     IPool public immutable aavePool;
-
-    // Self Protocol configuration
-    bytes32 public configId;
 
     // Vault accounting (share-based system)
     uint256 public totalShares;
@@ -104,7 +97,6 @@ contract AttestifyVault is
         uint256 reserveBalance,
         uint256 timestamp
     );
-    event ConfigIdUpdated(bytes32 newConfigId);
 
     /* ========== ERRORS ========== */
 
@@ -115,21 +107,17 @@ contract AttestifyVault is
     error InsufficientShares();
     error InsufficientLiquidity();
     error ZeroAddress();
-    error ConfigNotSet();
 
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
         address _cUSD,
         address _acUSD,
-        address _selfProtocolHub,
-        address _aavePool,
-        string memory _scopeSeed
-    ) SelfVerificationRoot(_selfProtocolHub, _scopeSeed) Ownable(msg.sender) {
+        address _aavePool
+    ) Ownable(msg.sender) {
         if (
             _cUSD == address(0) ||
             _acUSD == address(0) ||
-            _selfProtocolHub == address(0) ||
             _aavePool == address(0)
         ) {
             revert ZeroAddress();
@@ -143,6 +131,30 @@ contract AttestifyVault is
         _initializeStrategies();
 
         // Note: cUSD approval will be done on first deposit to avoid constructor issues
+    }
+
+    /* ========== VERIFICATION ========== */
+
+    /**
+     * @notice Simple verification function - marks user as verified
+     * @dev This is a simplified approach for testing
+     */
+    function verifySelfProof(bytes memory, bytes memory) external {
+        users[msg.sender].isVerified = true;
+        users[msg.sender].verifiedAt = block.timestamp;
+        users[msg.sender].userIdentifier = uint256(uint160(msg.sender)); // Use address as identifier
+        
+        // Set default strategy
+        userStrategy[msg.sender] = StrategyType.CONSERVATIVE;
+        
+        emit UserVerified(msg.sender, users[msg.sender].userIdentifier, block.timestamp);
+    }
+
+    /**
+     * @notice Check if user is verified
+     */
+    function isVerified(address user) external view returns (bool) {
+        return users[user].isVerified;
     }
 
     function _initializeStrategies() internal {
@@ -174,49 +186,6 @@ contract AttestifyVault is
         });
     }
 
-    /* ========== SELF PROTOCOL INTEGRATION ========== */
-
-    /**
-     * @notice Required override: Return the configuration ID for verification
-     */
-    function getConfigId(
-        bytes32 destinationChainId,
-        bytes32 userIdentifier,
-        bytes memory userDefinedData
-    ) public view override returns (bytes32) {
-        if (configId == bytes32(0)) revert ConfigNotSet();
-        return configId;
-    }
-
-    /**
-     * @notice Set the Self Protocol configuration ID
-     * @dev Must be called after deployment with ID from tools.self.xyz
-     */
-    function setConfigId(bytes32 _configId) external onlyOwner {
-        require(_configId != bytes32(0), "Invalid config ID");
-        configId = _configId;
-        emit ConfigIdUpdated(_configId);
-    }
-
-    /**
-     * @notice Hook called after successful verification
-     * @dev Override from SelfVerificationRoot
-     */
-    function customVerificationHook(
-        ISelfVerificationRoot.GenericDiscloseOutputV2 memory output,
-        bytes memory userData
-    ) internal virtual override {
-        // Mark user as verified
-        users[msg.sender].isVerified = true;
-        users[msg.sender].verifiedAt = block.timestamp;
-        users[msg.sender].userIdentifier = output.userIdentifier;
-
-        // Set default strategy
-        userStrategy[msg.sender] = StrategyType.CONSERVATIVE;
-
-        emit UserVerified(msg.sender, output.userIdentifier, block.timestamp);
-    }
-
     /* ========== MODIFIERS ========== */
 
     modifier onlyVerified() {
@@ -225,13 +194,6 @@ contract AttestifyVault is
     }
 
     /* ========== IDENTITY VERIFICATION ========== */
-
-    /**
-     * @notice Check if user is verified
-     */
-    function isVerified(address user) external view returns (bool) {
-        return users[user].isVerified;
-    }
 
     /* ========== CORE FUNCTIONS: DEPOSIT ========== */
 

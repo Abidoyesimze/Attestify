@@ -138,7 +138,7 @@ const [txError, setTxError] = useState('');
 ```typescript
 // Vault contract
 export const CONTRACT_CONFIG = {
-  address: "0x99dBE4AEa58E518C50a1c04aE9b48C9F6354612f",
+  address: "0xe416e2130C68Adc241B6f609B1B35d878ea5A56A",
   abi: ATTESTIFY_VAULT_ABI,
 };
 
@@ -335,7 +335,7 @@ All core dashboard functionalities have been successfully integrated:
 5. Deploy to production
 
 **Resources:**
-- Contract Address: `0x99dBE4AEa58E518C50a1c04aE9b48C9F6354612f`
+- Contract Address: `0xe416e2130C68Adc241B6f609B1B35d878ea5A56A`
 - Network: Celo Sepolia Testnet
 - cUSD Faucet: https://faucet.celo.org
 - Block Explorer: https://celo-sepolia.blockscout.com
