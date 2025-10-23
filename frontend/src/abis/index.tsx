@@ -2,7 +2,7 @@ import VaultABI from './Vault.json';
 
 // Contract addresses
 export const CONTRACT_ADDRESSES = {
-  ATTESTIFY_VAULT: "0x02929f7b33e39acA574BE268552181370f728980" as `0x${string}`, // New simplified contract
+  ATTESTIFY_VAULT: "0x9c75cC4A2D319363158dA01d97d5EFec55CED742" as `0x${string}`, // Fixed AttestifyVault
   CUSD_TOKEN: "0xdE9e4C3ce781b4bA68120d6261cbad65ce0aB00b" as `0x${string}`, // Real Celo Sepolia cUSD
 } as const;
 

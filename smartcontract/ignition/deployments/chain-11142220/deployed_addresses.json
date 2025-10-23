@@ -1,4 +1,5 @@
 {
-  "AttestifyVaultModule#AttestifyVault": "0xb03397B98Cd4032042C81b545E6D1c7cCadBC110",
-  "UpdatedAttestifyVaultModule#AttestifyVault": "0x02929f7b33e39acA574BE268552181370f728980"
+  "MockAaveVaultModule#MockAavePool": "0x267Cf7E391fb77329028Cba1C216ffcFb288F983",
+  "MockAaveVaultModule#MockAToken": "0xEfE339C84ECf9653fB3df3e2789a19D89466bAB3",
+  "MockAaveVaultModule#AttestifyVault": "0x9c75cC4A2D319363158dA01d97d5EFec55CED742"
 }

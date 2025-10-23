@@ -27,7 +27,6 @@ import Link from 'next/link';
 import { CONTRACT_CONFIG, CUSD_CONFIG, CONTRACT_ADDRESSES } from '@/abis';
 import VerificationModal from '@/components/VerificationModal';
 import AIChat from '@/components/AIChat';
-import EthersTest from '@/components/EthersTest';
 
 
 
@@ -393,7 +392,7 @@ export default function Dashboard() {
         ...CONTRACT_CONFIG,
         functionName: 'deposit',
         args: [amount],
-        gas: 500000n, // Increased gas limit
+        gas: BigInt(500000), // Increased gas limit
       });
     } catch (error: unknown) {
       console.error('Deposit error:', error);
@@ -718,7 +717,7 @@ export default function Dashboard() {
 
                     {depositStep === 'input' && (
                       <>
-                        {isPaused && (
+                        {!!isPaused && (
                           <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
                             <p className="text-sm text-red-800 font-medium">⚠️ Contract is paused</p>
                             <p className="text-xs text-red-700">Deposits are temporarily disabled</p>
@@ -726,10 +725,10 @@ export default function Dashboard() {
                         )}
                         <button 
                           onClick={handleDeposit}
-                          disabled={!depositAmount || depositAmount === '0' || isPaused}
+                          disabled={!depositAmount || depositAmount === '0' || !!isPaused}
                           className="w-full px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
                         >
-                          {isPaused ? 'Deposits Paused' : 'Deposit'}
+                          {isPaused ? 'Deposits Paused' : '💰 Deposit cUSD'}
                         </button>
                       </>
                     )}
@@ -819,6 +818,28 @@ export default function Dashboard() {
                   </div>
                   </div>
                 </div>
+
+                {/* Ethers.js Direct Test Component */}
+                <div className="mt-8 p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-4 text-yellow-800">🧪 Ethers.js Direct Test</h3>
+                  <p className="text-sm text-yellow-700 mb-4">
+                    Test deposit functionality using ethers.js directly to bypass Wagmi gas estimation issues.
+                  </p>
+                  <div className="bg-white p-4 rounded-lg border">
+                    <p className="text-sm text-gray-600 mb-4">
+                      This test component will help us identify if the deposit issue is with Wagmi gas estimation or the contract itself.
+                    </p>
+                    <button 
+                      onClick={() => {
+                        console.log('🧪 Ethers test button clicked!');
+                        alert('Ethers test component is working! Check console for logs.');
+                      }}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      Test Ethers Integration
+                    </button>
+                  </div>
+                </div>
               </>
           )}
 
@@ -834,14 +855,6 @@ export default function Dashboard() {
             />
           )}
 
-          {/* Ethers.js Direct Test Component */}
-          <div className="mt-8 p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <h3 className="text-lg font-semibold mb-4 text-yellow-800">🧪 Ethers.js Direct Test</h3>
-            <p className="text-sm text-yellow-700 mb-4">
-              Test deposit functionality using ethers.js directly to bypass Wagmi gas estimation issues.
-            </p>
-            <EthersTest />
-          </div>
 
           {activeSection === 'strategy' && (
             <div className="flex-1 p-6 overflow-y-auto">

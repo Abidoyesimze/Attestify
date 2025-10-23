@@ -6,9 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
-import "./IAave.sol";
 
-contract AttestifyVault is
+contract AttestifyVaultSimple is
     Ownable,
     ReentrancyGuard,
     Pausable
@@ -19,10 +18,6 @@ contract AttestifyVault is
 
     // Token contracts
     IERC20 public immutable cUSD;
-    IAToken public immutable acUSD;
-
-    // Protocol integrations
-    IPool public immutable aavePool;
 
     // Vault accounting (share-based system)
     uint256 public totalShares;
@@ -39,7 +34,6 @@ contract AttestifyVault is
     uint256 public constant MIN_DEPOSIT = 1e18; // 1 cUSD
     uint256 public constant MAX_DEPOSIT = 10_000e18;
     uint256 public constant MAX_TVL = 100_000e18;
-    uint256 public constant RESERVE_RATIO = 10;
 
     // Admin addresses
     address public aiAgent;
@@ -69,7 +63,6 @@ contract AttestifyVault is
 
     struct Strategy {
         string name;
-        uint8 aaveAllocation;
         uint8 reserveAllocation;
         uint16 targetAPY;
         uint8 riskLevel;
@@ -90,13 +83,6 @@ contract AttestifyVault is
         StrategyType oldStrategy,
         StrategyType newStrategy
     );
-    event DeployedToAave(uint256 amount, uint256 timestamp);
-    event WithdrawnFromAave(uint256 amount, uint256 timestamp);
-    event Rebalanced(
-        uint256 aaveBalance,
-        uint256 reserveBalance,
-        uint256 timestamp
-    );
 
     /* ========== ERRORS ========== */
 
@@ -111,26 +97,16 @@ contract AttestifyVault is
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
-        address _cUSD,
-        address _acUSD,
-        address _aavePool
+        address _cUSD
     ) Ownable(msg.sender) {
-        if (
-            _cUSD == address(0) ||
-            _acUSD == address(0) ||
-            _aavePool == address(0)
-        ) {
+        if (_cUSD == address(0)) {
             revert ZeroAddress();
         }
 
         cUSD = IERC20(_cUSD);
-        acUSD = IAToken(_acUSD);
-        aavePool = IPool(_aavePool);
         treasury = msg.sender;
 
         _initializeStrategies();
-
-        // Note: cUSD approval will be done on first deposit to avoid constructor issues
     }
 
     /* ========== VERIFICATION ========== */
@@ -160,8 +136,7 @@ contract AttestifyVault is
     function _initializeStrategies() internal {
         strategies[StrategyType.CONSERVATIVE] = Strategy({
             name: "Conservative",
-            aaveAllocation: 100,
-            reserveAllocation: 0,
+            reserveAllocation: 100,
             targetAPY: 350,
             riskLevel: 1,
             isActive: true
@@ -169,8 +144,7 @@ contract AttestifyVault is
 
         strategies[StrategyType.BALANCED] = Strategy({
             name: "Balanced",
-            aaveAllocation: 90,
-            reserveAllocation: 10,
+            reserveAllocation: 100,
             targetAPY: 350,
             riskLevel: 3,
             isActive: true
@@ -178,8 +152,7 @@ contract AttestifyVault is
 
         strategies[StrategyType.GROWTH] = Strategy({
             name: "Growth",
-            aaveAllocation: 80,
-            reserveAllocation: 20,
+            reserveAllocation: 100,
             targetAPY: 350,
             riskLevel: 5,
             isActive: true
@@ -192,8 +165,6 @@ contract AttestifyVault is
         if (!users[msg.sender].isVerified) revert NotVerified();
         _;
     }
-
-    /* ========== IDENTITY VERIFICATION ========== */
 
     /* ========== CORE FUNCTIONS: DEPOSIT ========== */
 
@@ -219,37 +190,8 @@ contract AttestifyVault is
         totalDeposited += assets;
 
         cUSD.safeTransferFrom(msg.sender, address(this), assets);
-        _deployToAave(assets);
 
         emit Deposited(msg.sender, assets, sharesIssued);
-    }
-
-    function _deployToAave(uint256 amount) internal {
-        uint256 reserveAmount = (amount * RESERVE_RATIO) / 100;
-        uint256 deployAmount = amount - reserveAmount;
-
-        if (deployAmount > 0) {
-            // Ensure Aave has approval (safer incremental approval)
-            uint256 currentAllowance = cUSD.allowance(
-                address(this),
-                address(aavePool)
-            );
-            if (currentAllowance < deployAmount) {
-                // Use incremental approval instead of unlimited
-                uint256 neededAllowance = deployAmount - currentAllowance;
-                cUSD.approve(address(aavePool), currentAllowance + neededAllowance);
-            }
-
-            // Supply to Aave (receives acUSD in return)
-            aavePool.supply(
-                address(cUSD),
-                deployAmount,
-                address(this),
-                0 // No referral code
-            );
-
-            emit DeployedToAave(deployAmount, block.timestamp);
-        }
     }
 
     /* ========== CORE FUNCTIONS: WITHDRAW ========== */
@@ -267,35 +209,15 @@ contract AttestifyVault is
         users[msg.sender].lastActionTime = block.timestamp;
         totalWithdrawn += assets;
 
-        uint256 reserveBalance = cUSD.balanceOf(address(this));
-
-        if (reserveBalance < assets) {
-            uint256 shortfall = assets - reserveBalance;
-            _withdrawFromAave(shortfall);
-        }
-
         cUSD.safeTransfer(msg.sender, assets);
 
         emit Withdrawn(msg.sender, assets, sharesBurned);
     }
 
-    function _withdrawFromAave(uint256 amount) internal {
-        // Withdraw from Aave (burns acUSD, returns cUSD)
-        uint256 withdrawn = aavePool.withdraw(
-            address(cUSD),
-            amount,
-            address(this)
-        );
-
-        emit WithdrawnFromAave(withdrawn, block.timestamp);
-    }
-
     /* ========== VIEW FUNCTIONS ========== */
 
     function totalAssets() public view returns (uint256) {
-        uint256 reserveBalance = cUSD.balanceOf(address(this));
-        (uint256 aaveBalance,,,,,) = aavePool.getUserAccountData(address(this)); // Get total collateral from Aave
-        return reserveBalance + aaveBalance;
+        return cUSD.balanceOf(address(this));
     }
 
     function balanceOf(address user) external view returns (uint256) {
@@ -320,17 +242,14 @@ contract AttestifyVault is
             uint256 _totalAssets,
             uint256 _totalShares,
             uint256 reserveBalance,
-            uint256 aaveBalance,
             uint256 _totalDeposited,
             uint256 _totalWithdrawn
         )
     {
-        (uint256 aaveBalance,,,,,) = aavePool.getUserAccountData(address(this));
         return (
             totalAssets(),
             totalShares,
             cUSD.balanceOf(address(this)),
-            aaveBalance, // Get total collateral from Aave
             totalDeposited,
             totalWithdrawn
         );
@@ -365,29 +284,6 @@ contract AttestifyVault is
     }
 
     /* ========== ADMIN FUNCTIONS ========== */
-
-    function rebalance() external {
-        require(msg.sender == owner() || msg.sender == aiAgent, "Unauthorized");
-
-        uint256 _totalAssets = totalAssets();
-        uint256 targetReserve = (_totalAssets * RESERVE_RATIO) / 100;
-        uint256 currentReserve = cUSD.balanceOf(address(this));
-
-        if (currentReserve < targetReserve) {
-            uint256 needed = targetReserve - currentReserve;
-            _withdrawFromAave(needed);
-        } else if (currentReserve > targetReserve * 2) {
-            uint256 excess = currentReserve - targetReserve;
-            _deployToAave(excess);
-        }
-
-        lastRebalance = block.timestamp;
-        emit Rebalanced(
-            acUSD.balanceOf(address(this)),
-            cUSD.balanceOf(address(this)),
-            block.timestamp
-        );
-    }
 
     function setAIAgent(address _aiAgent) external onlyOwner {
         if (_aiAgent == address(0)) revert ZeroAddress();

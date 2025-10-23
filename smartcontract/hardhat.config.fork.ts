@@ -37,16 +37,15 @@ const config: HardhatUserConfig = {
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 11142220,
     },
-    // Fork Celo Mainnet for real Aave testing
+    // Fork Celo Mainnet for Aave testing
     celoMainnetFork: {
-      type: "http",
-      url: "https://forno.celo.org", // Celo mainnet RPC
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      chainId: 42220, // Celo mainnet chain ID
+      url: "http://127.0.0.1:8545",
       forking: {
-        url: "https://forno.celo.org",
+        url: "https://forno.celo.org", // Celo mainnet RPC
         blockNumber: undefined, // Use latest block
       },
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 42220, // Celo mainnet chain ID
     },
   },
 };

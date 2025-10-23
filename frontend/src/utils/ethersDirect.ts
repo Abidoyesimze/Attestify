@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 
 // Contract addresses
-const VAULT_ADDRESS = '0x02929f7b33e39acA574BE268552181370f728980';
+const VAULT_ADDRESS = '0x9c75cC4A2D319363158dA01d97d5EFec55CED742';
 const CUSD_ADDRESS = '0xdE9e4C3ce781b4bA68120d6261cbad65ce0aB00b'; // Real Celo Sepolia cUSD
 
 // Contract ABIs
