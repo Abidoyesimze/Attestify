@@ -121,7 +121,7 @@ window.open(universalLink, '_blank');
 ## 🔐 Smart Contract Integration
 
 ### Contract Details
-- **Address**: `0x99dBE4AEa58E518C50a1c04aE9b48C9F6354612f`
+- **Address**: `0xe416e2130C68Adc241B6f609B1B35d878ea5A56A`
 - **Network**: Celo Sepolia (Chain ID: 11142220)
 - **Endpoint Type**: `staging_celo`
 

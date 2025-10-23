@@ -367,7 +367,7 @@ If something doesn't work:
 
 ## 📞 Support Resources
 
-- **Contract**: 0x99dBE4AEa58E518C50a1c04aE9b48C9F6354612f
+- **Contract**: 0xe416e2130C68Adc241B6f609B1B35d878ea5A56A
 - **Block Explorer**: https://celo-sepolia.blockscout.com
 - **Celo Docs**: https://docs.celo.org
 - **Self Protocol**: https://docs.self.xyz

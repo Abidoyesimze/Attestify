@@ -24,7 +24,7 @@ Self Protocol provides privacy-preserving identity verification using zero-knowl
 
 ### 3. **Smart Contract Integration** (`src/abis/index.tsx`)
 - Contract ABI with `verifyIdentity` function
-- Contract address: `0x99dBE4AEa58E518C50a1c04aE9b48C9F6354612f` (lowercase for SDK)
+- Contract address: `0xe416e2130C68Adc241B6f609B1B35d878ea5A56A` (lowercase for SDK)
 - Endpoint type: `staging_celo` for Celo Sepolia testnet
 - User ID type: `hex` for EVM addresses
 
@@ -123,7 +123,7 @@ const app = new SelfAppBuilder({
 ## Smart Contract
 
 ### Contract: AttestifyVault
-**Address**: `0x99dBE4AEa58E518C50a1c04aE9b48C9F6354612f`
+**Address**: `0xe416e2130C68Adc241B6f609B1B35d878ea5A56A`
 
 ### Function: verifyIdentity
 ```solidity

@@ -3,7 +3,7 @@
 This document outlines all available functions in the AttestifyVault contract and how to integrate them into the frontend dashboard.
 
 ## 📊 Contract Information
-- **Address**: `0x99dBE4AEa58E518C50a1c04aE9b48C9F6354612f` (Celo Sepolia Testnet)
+- **Address**: `0xe416e2130C68Adc241B6f609B1B35d878ea5A56A` (Celo Sepolia Testnet)
 - **Network**: Celo Sepolia (Chain ID: 11142220)
 - **ABI Location**: `frontend/src/abis/Vault.json`
 
