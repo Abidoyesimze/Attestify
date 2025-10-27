@@ -23,7 +23,7 @@ export default function HowItWorksSection() {
       number: '02',
       icon: DollarSign,
       title: 'Deposit cUSD',
-      description: 'Start with as little as 10 cUSD. Funds automatically deploy to Moola Market. Interest starts immediately.',
+      description: 'Start with as little as 10 cUSD. Funds automatically deploy to Aave Market. Interest starts immediately.',
       time: '30 seconds',
       gradient: 'from-green-500 to-green-600',
       delay: 0.4,
