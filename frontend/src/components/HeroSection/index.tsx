@@ -67,14 +67,14 @@ export default function HeroSection() {
             transition={{ duration: 0.8, delay: 0.3 }}
             className="text-5xl md:text-7xl font-bold text-gray-900 leading-tight mb-6"
           >
-            Your Verified
+            Automated DeFi
             <motion.span
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, delay: 0.8 }}
               className="block bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 bg-clip-text text-transparent"
             >
-              Savings Account
+              Yield Generation
             </motion.span>
             <motion.span
               initial={{ opacity: 0, x: -50 }}
@@ -93,26 +93,26 @@ export default function HeroSection() {
             transition={{ duration: 0.6, delay: 0.5 }}
             className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed"
           >
-            Prove you&apos;re human <motion.span
+            Verify once, earn forever. We <motion.span
               initial={{ scale: 1 }}
               whileHover={{ scale: 1.1 }}
               className="font-semibold text-gray-900 inline-block"
             >
-              once
-            </motion.span>. 
-            Earn <motion.span
+              deploy your funds
+            </motion.span> to 
+            DeFi protocols for <motion.span
               initial={{ scale: 1 }}
               whileHover={{ scale: 1.1 }}
               className="font-semibold text-green-600 inline-block"
             >
               3-15% APY
-            </motion.span> forever. 
-            AI-powered DeFi made <motion.span
+            </motion.span>. 
+            AI-powered, <motion.span
               initial={{ scale: 1 }}
               whileHover={{ scale: 1.1 }}
               className="font-semibold text-gray-900 inline-block"
             >
-              simple
+              fully automated
             </motion.span>.
           </motion.p>
 

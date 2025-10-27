@@ -555,7 +555,7 @@ export default function Dashboard() {
             <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <Shield className="h-8 w-8 text-green-600" />
           </div>
-          <h2 className="text-2xl font-bold mb-4">Verify Your Identity</h2>
+            <h2 className="text-2xl font-bold mb-4 text-gray-900">Verify Your Identity</h2>
           <p className="text-gray-600 mb-6">
             You need to verify your identity with Self Protocol before you can start earning.
           </p>

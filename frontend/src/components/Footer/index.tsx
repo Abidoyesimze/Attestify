@@ -18,7 +18,7 @@ export default function Footer() {
     ],
     resources: [
       { name: 'Self Protocol', href: 'https://docs.self.xyz', external: true },
-      { name: 'Moola Market', href: 'https://docs.moola.market', external: true },
+      { name: 'Aave Market', href: 'https://docs.Aave.market', external: true },
       { name: 'Celo Network', href: 'https://docs.celo.org', external: true },
     ],
     community: [

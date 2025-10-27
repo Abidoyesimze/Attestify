@@ -1,6 +1,6 @@
 #  Attestify
 
-**Verified Savings on Celo • AI-Powered DeFi Made Simple**
+**Automated DeFi Yield Generation on Celo • AI-Powered Investment Platform**
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Attestify-blue?style=for-the-badge&logo=vercel)](https://attestify.vercel.app/)
 [![Contract](https://img.shields.io/badge/Smart%20Contract-View%20on%20Blockscout-green?style=for-the-badge&logo=ethereum)](https://celo-sepolia.blockscout.com/address/0x9c75cC4A2D319363158dA01d97d5EFec55CED742)
@@ -10,7 +10,7 @@
 
 ##  What is Attestify?
 
-Attestify is a decentralized savings platform that makes high-yield DeFi accessible to everyone. By combining **identity verification**, **automated yield generation**, and **AI-powered financial assistance**, we've created a savings experience that's as simple as traditional banking but with the benefits of decentralized finance.
+Attestify is a verified yield generation platform that automates DeFi investments for everyone. By combining **identity verification**, **automated fund deployment**, and **AI-powered financial assistance**, we deploy your funds to DeFi protocols (like Aave) to earn competitive yields—no technical knowledge required.
 
 **Start earning 3-15% APY with just 10 cUSD - no technical knowledge required.**
 
@@ -24,7 +24,7 @@ Attestify is a decentralized savings platform that makes high-yield DeFi accessi
 - One-time verification unlocks all platform features
 
 ###  **Automatic Yield Generation**
-- Deposits automatically earn interest via Moola Market
+- Your funds are automatically deployed to Aave Market for yield
 - Watch your balance grow with compound interest 24/7
 - Three risk-adjusted strategies: Conservative, Balanced, Growth
 

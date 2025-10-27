@@ -27,7 +27,7 @@ export default function FeaturesSection() {
     {
       icon: TrendingUp,
       title: 'Automatic Yield Generation',
-      description: 'Your deposits earn interest via Moola Market. Watch your balance grow with compound interest 24/7.',
+      description: 'Your funds are deployed to Aave Market earning yield. Watch your balance grow with compound interest 24/7.',
       gradient: 'from-green-500 to-green-600',
       delay: 0.2,
     },
