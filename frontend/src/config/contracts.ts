@@ -28,7 +28,7 @@ export const APP_CONFIG = {
       chainId: 11142220,
       name: 'Celo Sepolia',
       rpcUrl: 'https://forno.celo-sepolia.celo-testnet.org',
-      explorerUrl: 'https://celo-sepolia.blockscout.com',
+      explorerUrl: 'https://sepolia.celoscan.io',
       nativeCurrency: {
         name: 'Sepolia Celo',
         symbol: 'S-CELO',

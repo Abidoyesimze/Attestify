@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "@brian-ai/sdk": "^0.3.7",
-    "@rainbow-me/rainbowkit": "^2.2.8",
+    "@celo/react-celo": "^5.0.4",
+    "@reown/appkit": "^1.8.12",
+    "@reown/appkit-adapter-wagmi": "^1.8.12",
     "@selfxyz/qrcode": "^1.0.15",
     "@tanstack/react-query": "^5.90.2",
     "ethers": "^6.15.0",
