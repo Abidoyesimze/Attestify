@@ -3,7 +3,7 @@
 **Automated DeFi Yield Generation on Celo • AI-Powered Investment Platform**
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Attestify-blue?style=for-the-badge&logo=vercel)](https://attestify.vercel.app/)
-[![Contract](https://img.shields.io/badge/Smart%20Contract-View%20on%20Blockscout-green?style=for-the-badge&logo=ethereum)](https://celo-sepolia.blockscout.com/address/0x9c75cC4A2D319363158dA01d97d5EFec55CED742)
+[![Contract](https://img.shields.io/badge/Smart%20Contract-View%20on%20CeloScan-green?style=for-the-badge&logo=ethereum)](https://sepolia.celoscan.io/address/0x9c75cC4A2D319363158dA01d97d5EFec55CED742)
 [![Built on Celo](https://img.shields.io/badge/Built%20on-Celo-gold?style=for-the-badge&logo=celo)](https://celo.org/)
 
 ---
@@ -97,7 +97,7 @@ Check dashboard daily. Chat with AI for advice. Withdraw anytime—no fees, no l
 
 ## 🔗 Contract Information
 
-**Smart Contract**: [`0x9c75cC4A2D319363158dA01d97d5EFec55CED742`](https://celo-sepolia.blockscout.com/address/0x9c75cC4A2D319363158dA01d97d5EFec55CED742)
+**Smart Contract**: [`0x9c75cC4A2D319363158dA01d97d5EFec55CED742`](https://sepolia.celoscan.io/address/0x9c75cC4A2D319363158dA01d97d5EFec55CED742)
 
 - **Network**: Celo Sepolia Testnet
 - **Standard**: ERC-4626 Vault

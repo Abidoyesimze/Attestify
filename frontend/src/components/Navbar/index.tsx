@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Menu, X } from 'lucide-react';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
+import ConnectWalletButton from '@/components/ConnectWalletButton';
 import Link from 'next/link';
 
 export default function Navbar() {
@@ -92,7 +92,7 @@ export default function Navbar() {
             transition={{ delay: 0.5 }}
             className="hidden md:block"
           >
-            <ConnectButton />
+            <ConnectWalletButton />
           </motion.div>
 
           {/* Mobile Menu Button */}
@@ -158,7 +158,7 @@ export default function Navbar() {
                   transition={{ delay: 0.4 }}
                   className="px-4"
                 >
-                  <ConnectButton />
+                  <ConnectWalletButton />
                 </motion.div>
               </div>
             </motion.div>
