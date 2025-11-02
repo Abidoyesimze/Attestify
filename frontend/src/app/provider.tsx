@@ -41,6 +41,7 @@ const celoSepolia = defineChain({
 });
 
 // Only Celo Sepolia - no mainnet
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const networks = [celoSepolia] as any;
 
 // 4. Create Wagmi Adapter

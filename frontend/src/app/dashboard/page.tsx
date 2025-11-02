@@ -196,10 +196,10 @@ export default function Dashboard() {
     args: [2],
   });
 
-  const { writeContract: writeApproval, data: approvalHash, error: approvalError } = useWriteContract();
+  const { writeContract: writeApproval, data: approvalHash, error: _approvalError } = useWriteContract();
   const { writeContract: writeDeposit, data: depositHash, error: depositError } = useWriteContract();
-  const { writeContract: writeWithdraw, data: withdrawHash, error: withdrawError } = useWriteContract();
-  const { writeContract: writeStrategyChange, data: strategyHash, error: strategyError } = useWriteContract();
+  const { writeContract: writeWithdraw, data: withdrawHash, error: _withdrawError } = useWriteContract();
+  const { writeContract: writeStrategyChange, data: strategyHash, error: _strategyError } = useWriteContract();
 
   // Wait for approval transaction
   const { isSuccess: isApprovalSuccess } = useWaitForTransactionReceipt({
@@ -320,6 +320,7 @@ export default function Dashboard() {
       setDepositStep('depositing');
       handleDepositAfterApproval();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isApprovalSuccess]);
 
   // Handle deposit success
@@ -333,6 +334,7 @@ export default function Dashboard() {
       refetchAllowance();
       setTimeout(() => setDepositStep('input'), 3000);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDepositSuccess]);
 
   // Handle deposit error
@@ -369,6 +371,7 @@ export default function Dashboard() {
       refetchCusdBalance();
       setTimeout(() => setWithdrawStep('input'), 3000);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isWithdrawSuccess]);
 
   // Handle strategy change success
@@ -379,6 +382,7 @@ export default function Dashboard() {
       refetchStrategy();
       setTimeout(() => setStrategyStep('input'), 3000);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isStrategySuccess]);
 
   // Handle verification completion
