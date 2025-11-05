@@ -472,7 +472,7 @@ export async function useBrianAgent(
       body: JSON.stringify({
         prompt,
         address: userAddress,
-        chainId: '44787', // Celo Sepolia testnet
+        chainId: '11142220', // Celo Sepolia testnet
         messages: conversationHistory,
       }),
     });
