@@ -76,7 +76,7 @@ export default function AIChat({
         body: JSON.stringify({
           prompt,
           address,
-          chainId: '44787', // Celo Sepolia testnet
+          chainId: '11142220', // Celo Sepolia testnet
           messages: conversationHistory,
         }),
       });
@@ -174,13 +174,25 @@ export default function AIChat({
 
   // Handle local responses as fallback
   const handleLocalResponse = async (currentInput: string): Promise<string> => {
-    // Portfolio queries
-    if (currentInput.toLowerCase().includes('balance') || currentInput.toLowerCase().includes('how much')) {
+    const inputLower = currentInput.toLowerCase();
+    
+    // Portfolio queries - expanded patterns
+    if (inputLower.includes('balance') || 
+        inputLower.includes('how much') ||
+        inputLower.includes('what\'s my') ||
+        inputLower.includes('my balance')) {
       const earningsNum = parseFloat(earnings);
       return `📊 Your Attestify Portfolio:\n\n• Vault Balance: ${vaultBalance} cUSD\n• Total Earnings: ${earningsNum > 0.01 ? earningsNum.toFixed(2) : earningsNum.toFixed(6)} cUSD\n• Current APY: ${currentAPY}%\n• Strategy: ${currentStrategy}\n\nYou're earning approximately $${(parseFloat(vaultBalance) * parseFloat(currentAPY) / 100 / 365).toFixed(6)} per day!`;
     }
-    // Performance queries
-    else if (currentInput.toLowerCase().includes('performance') || currentInput.toLowerCase().includes('earning')) {
+    // Performance queries - expanded patterns
+    else if (inputLower.includes('performance') || 
+             inputLower.includes('earning') ||
+             inputLower.includes('how\'s my vault') ||
+             inputLower.includes('how is my vault') ||
+             inputLower.includes('vault going') ||
+             inputLower.includes('vault doing') ||
+             inputLower.includes('how am i doing') ||
+             inputLower.includes('how\'s it going')) {
       const vaultBalanceNum = parseFloat(vaultBalance);
       const earningsNum = parseFloat(earnings);
       const originalDeposit = vaultBalanceNum - earningsNum;
@@ -418,6 +430,18 @@ export default function AIChat({
           <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
             <p className="text-xs text-yellow-800">
               ⚠️ <strong>Brian AI not configured.</strong> Add your API key to enable advanced AI features.
+              <br />
+              <span className="text-yellow-700">
+                Get your API key from https://brianknows.org and add NEXT_PUBLIC_BRIAN_API_KEY to your .env.local
+              </span>
+            </p>
+          </div>
+        )}
+        
+        {isBrianAIConfigured() && (
+          <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-3">
+            <p className="text-xs text-green-800">
+              ✅ <strong>AI Enabled:</strong> Brian AI is active and ready to help with DeFi questions and vault management.
             </p>
           </div>
         )}
