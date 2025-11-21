@@ -5,6 +5,7 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-ignition": "^3.0.3",
     "@nomicfoundation/hardhat-toolbox-viem": "^5.0.0",
+    "@nomicfoundation/hardhat-verify": "^3.0.4",
     "@types/chai": "^5.2.3",
     "@types/node": "^22.18.12",
     "chai": "^6.2.0",
