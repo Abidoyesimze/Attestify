@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {IPool} from "@aave/core-v3/contracts/interfaces/IPool.sol";
+import {IAToken} from "@aave/core-v3/contracts/interfaces/IAToken.sol";
+
 /**
  * @title IAaveStrategy
  * @notice Interface for Aave V3 yield strategy
