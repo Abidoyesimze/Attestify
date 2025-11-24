@@ -1,13 +1,14 @@
 import { config as dotenvConfig } from "dotenv";
 import type { HardhatUserConfig } from "hardhat/config";
 import hardhatToolboxViem from "@nomicfoundation/hardhat-toolbox-viem";
+import hardhatEthers from "@nomicfoundation/hardhat-ethers";
 
 dotenvConfig();
 
 const { PRIVATE_KEY, CELOSCAN_API_KEY, CELO_MAINNET_RPC } = process.env;
 
 const config: HardhatUserConfig = {
-  plugins: [hardhatToolboxViem],
+  plugins: [hardhatToolboxViem, hardhatEthers],
   solidity: {
     version: "0.8.28",
     settings: {
