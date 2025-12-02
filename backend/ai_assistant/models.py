@@ -15,7 +15,7 @@ class Conversation(models.Model):
         User, 
         on_delete=models.CASCADE, 
         related_name='conversations',
-        null=True,  # Allow anonymous conversations
+        null=True,  
         blank=True
     )
     session_id = models.CharField(
