@@ -9,7 +9,7 @@ class AIAssistantService:
     def __init__(self):
         self.api_key = os.environ.get('GOOGLE_API_KEY')
         self.api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent"
-        self.model = "gemini-2.0-flash-exp"  # Fast, capable Gemini model
+        self.model = "gemini-2.0-flash" 
         
     def _build_context(self, user_data: Optional[Dict] = None) -> str:
         """Build enhanced context with user-specific data"""
