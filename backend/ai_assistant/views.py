@@ -3,9 +3,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from .models import Conversation
-from ..ai_assistant.services import AIAssistantService
-from ..ai_assistant.serializers import MessageSerializer, ConversationSerializer
+from .models import Conversation, ConversationSession
+from .services import AIAssistantService
+from .serializers import MessageSerializer, ConversationSerializer
 import uuid
 
 ai_service = AIAssistantService()
@@ -33,72 +33,85 @@ def chat(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # Get or create conversation
+    # Get or create conversation session
     if session_id:
-        conversation = get_object_or_404(Conversation, session_id=session_id, user=user)
+        session = get_object_or_404(
+            ConversationSession, 
+            session_id=session_id, 
+            user=user
+        )
     else:
         session_id = str(uuid.uuid4())
-        conversation = Conversation.objects.create(
+        session = ConversationSession.objects.create(
             user=user,
             session_id=session_id
         )
     
-        from .models import Conversation, ConversationSession
-        conversation = Conversation.objects.create(
-            session_id=session_id,
-            message=user_message[-1]['content'],
-            role='user',
-            metadata={'user_data': user_data}
-        )
+    # Save user message
+    Conversation.objects.create(
+        user=user,
+        session_id=session_id,
+        message=user_message,
+        role='user',
+        metadata={}
+    )
+    
     # Get conversation history (last 10 messages for context)
-    recent_messages = Message.objects.filter(
-        conversation=conversation
+    recent_messages = Conversation.objects.filter(
+        session_id=session_id
     ).order_by('-created_at')[:10]
     
-    # Format messages for API
+    # Format messages for API (reverse to chronological order)
     messages_for_api = []
     for msg in reversed(recent_messages):
-        if msg.role != Message.SYSTEM:
-            messages_for_api.append({
-                'role': msg.role,
-                'content': msg.content
-            })
+        messages_for_api.append({
+            'role': msg.role,
+            'content': msg.message
+        })
     
     # Get user context data
     user_data = {
-        'is_new_user': not user.deposits.exists(),
+        'is_new_user': not hasattr(user, 'deposits') or not user.deposits.exists(),
     }
     
     # Get latest balance if exists
-    latest_balance = user.balances.first()
-    if latest_balance:
-        user_data.update({
-            'balance': float(latest_balance.current_balance),
-            'total_deposited': float(latest_balance.total_deposited),
-            'total_earned': float(latest_balance.total_earned),
-        })
+    if hasattr(user, 'balances'):
+        latest_balance = user.balances.first()
+        if latest_balance:
+            user_data.update({
+                'balance': float(latest_balance.current_balance),
+                'total_deposited': float(latest_balance.total_deposited),
+                'total_earned': float(latest_balance.total_earned),
+            })
     
     # Get current strategy from latest deposit
-    latest_deposit = user.deposits.filter(
-        transaction_type='deposit',
-        strategy__isnull=False
-    ).first()
-    if latest_deposit:
-        user_data['current_strategy'] = latest_deposit.strategy.name
+    if hasattr(user, 'deposits'):
+        latest_deposit = user.deposits.filter(
+            transaction_type='deposit',
+            strategy__isnull=False
+        ).first()
+        if latest_deposit:
+            user_data['current_strategy'] = latest_deposit.strategy.name
     
     # Get AI response
     ai_response = ai_service.get_response(messages_for_api, user_data)
     
     # Save assistant message
-    assistant_message = Message.objects.create(
-        conversation=conversation,
-        role=Message.ASSISTANT,
-        content=ai_response['message'],
+    assistant_message = Conversation.objects.create(
+        user=user,
+        session_id=session_id,
+        message=ai_response['message'],
+        role='assistant',
         metadata={
             'source': ai_response.get('source', 'api'),
             'error': ai_response.get('error')
-        }
+        },
+        response_source=ai_response.get('source', 'api')
     )
+    
+    # Update session
+    session.message_count = Conversation.objects.filter(session_id=session_id).count()
+    session.save()
     
     return Response({
         'session_id': session_id,
@@ -116,17 +129,18 @@ def conversation_history(request, session_id):
     
     GET /api/ai/conversations/<session_id>/
     """
-    conversation = get_object_or_404(
-        Conversation,
+    session = get_object_or_404(
+        ConversationSession,
         session_id=session_id,
         user=request.user
     )
     
-    messages = Message.objects.filter(conversation=conversation)
+    messages = Conversation.objects.filter(session_id=session_id).order_by('created_at')
     serializer = MessageSerializer(messages, many=True)
     
     return Response({
         'session_id': session_id,
+        'title': session.title,
         'messages': serializer.data
     })
 
@@ -139,8 +153,8 @@ def user_conversations(request):
     
     GET /api/ai/conversations/
     """
-    conversations = Conversation.objects.filter(user=request.user)
-    serializer = ConversationSerializer(conversations, many=True)
+    sessions = ConversationSession.objects.filter(user=request.user)
+    serializer = ConversationSerializer(sessions, many=True)
     
     return Response({
         'conversations': serializer.data
@@ -155,12 +169,17 @@ def delete_conversation(request, session_id):
     
     DELETE /api/ai/conversations/<session_id>/
     """
-    conversation = get_object_or_404(
-        Conversation,
+    session = get_object_or_404(
+        ConversationSession,
         session_id=session_id,
         user=request.user
     )
-    conversation.delete()
+    
+    # Delete all messages in this session
+    Conversation.objects.filter(session_id=session_id).delete()
+    
+    # Delete the session
+    session.delete()
     
     return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -217,5 +236,3 @@ def strategy_comparison(request):
             }
         }
     })
-
-
