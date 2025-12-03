@@ -332,3 +332,29 @@ class AIConfiguration(models.Model):
                 return {}
         else:
             return self.value
+        
+
+class Message(models.Model):
+    """Individual message in a conversation"""
+    
+    ROLE_CHOICES = [
+        ('user', 'User'),
+        ('assistant', 'Assistant'),
+    ]
+    
+    conversation = models.ForeignKey(
+        ConversationSession,
+        on_delete=models.CASCADE,
+        related_name='messages'
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    content = models.TextField()
+    metadata = models.JSONField(default=dict, blank=True)
+    model_used = models.CharField(max_length=50, default='gemini-2.0-flash-exp')
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    class Meta:
+        ordering = ['created_at']
+    
+    def __str__(self):
+        return f"{self.role}: {self.content[:50]}..."

@@ -1,7 +1,7 @@
 import os
 import requests
 from typing import List, Dict, Optional
-from ..ai_assistant.context import SYSTEM_CONTEXT, DEFI_GLOSSARY, STRATEGY_COMPARISON
+from .context import SYSTEM_CONTEXT, DEFI_GLOSSARY, STRATEGY_COMPARISON
 
 class AIAssistantService:
     """Service for interacting with Google Gemini API"""

@@ -1,9 +1,9 @@
 from rest_framework import serializers
-from ..attestify.models import Conversation, Message
+from .models import Conversation, Message
 
 class MessageSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Message
+        model = Conversation
         fields = ['id', 'role', 'content', 'metadata', 'created_at']
         read_only_fields = ['id', 'created_at']
 
