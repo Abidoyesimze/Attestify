@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useAccount } from 'wagmi';
-import { Bot, Send, Loader2, TrendingUp, Target, DollarSign, AlertCircle, ArrowDownLeft, ArrowUpRight, X, Minimize2, Maximize2 } from 'lucide-react';
+import { Bot, Send, Loader2, TrendingUp, Target, DollarSign, Minimize2 } from 'lucide-react';
 import { API_ENDPOINTS, getAuthHeaders } from '@/config/api';
 
 interface Message {
@@ -24,15 +24,15 @@ interface AIChatSidebarProps {
 }
 
 export default function AIChatSidebar({ 
-  vaultBalance, 
-  currentAPY,
-  currentStrategy,
-  earnings,
-  minDeposit,
-  maxDeposit,
-  onDeposit,
-  onWithdraw,
-  onStrategyChange
+  vaultBalance: _vaultBalance, 
+  currentAPY: _currentAPY,
+  currentStrategy: _currentStrategy,
+  earnings: _earnings,
+  minDeposit: _minDeposit,
+  maxDeposit: _maxDeposit,
+  onDeposit: _onDeposit,
+  onWithdraw: _onWithdraw,
+  onStrategyChange: _onStrategyChange
 }: AIChatSidebarProps) {
   const { address } = useAccount();
   const [messages, setMessages] = useState<Message[]>([]);
