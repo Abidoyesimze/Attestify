@@ -12,7 +12,6 @@ ai_service = AIAssistantService()
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
 def chat(request):
     """
     Main chat endpoint for AI assistant
@@ -23,7 +22,7 @@ def chat(request):
         "session_id": "optional-session-id"
     }
     """
-    user = request.user
+    user = request.user if request.user.is_authenticated else None
     user_message = request.data.get('message', '').strip()
     session_id = request.data.get('session_id')
     
@@ -33,7 +32,6 @@ def chat(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # Get or create conversation session
     if session_id:
         session = get_object_or_404(
             ConversationSession, 
@@ -47,7 +45,6 @@ def chat(request):
             session_id=session_id
         )
     
-    # Save user message
     Conversation.objects.create(
         user=user,
         session_id=session_id,
@@ -56,12 +53,10 @@ def chat(request):
         metadata={}
     )
     
-    # Get conversation history (last 10 messages for context)
     recent_messages = Conversation.objects.filter(
         session_id=session_id
     ).order_by('-created_at')[:10]
     
-    # Format messages for API (reverse to chronological order)
     messages_for_api = []
     for msg in reversed(recent_messages):
         messages_for_api.append({
@@ -122,7 +117,6 @@ def chat(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
 def conversation_history(request, session_id):
     """
     Get conversation history
@@ -146,7 +140,6 @@ def conversation_history(request, session_id):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
 def user_conversations(request):
     """
     Get all user conversations
@@ -162,7 +155,6 @@ def user_conversations(request):
 
 
 @api_view(['DELETE'])
-@permission_classes([IsAuthenticated])
 def delete_conversation(request, session_id):
     """
     Delete a conversation
