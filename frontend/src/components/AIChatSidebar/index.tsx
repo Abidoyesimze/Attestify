@@ -60,10 +60,13 @@ export default function AIChatSidebar({
   }, [messages, isMinimized]);
 
   // Call backend API (Attestify Django backend)
-  const callBackendAPI = async (message: string): Promise<{ message: string; session_id?: string } | null> => {
-    if (!address) return null;
+  const callBackendAPI = async (message: string): Promise<{ message: string; session_id?: string }> => {
+    if (!address) {
+      throw new Error('Wallet address is required to use the AI assistant.');
+    }
 
     try {
+      console.log('Calling backend API:', API_ENDPOINTS.ai.chat);
       const response = await fetch(API_ENDPOINTS.ai.chat, {
         method: 'POST',
         headers: getAuthHeaders(address),
@@ -87,6 +90,11 @@ export default function AIChatSidebar({
         const errorText = await response.text();
         console.error('Backend API error:', response.status, errorText);
         
+        // Check for CORS error (status 0 or network error)
+        if (response.status === 0 || !response.status) {
+          throw new Error(`CORS Error: The backend server at ${API_ENDPOINTS.ai.chat} is blocking requests from this origin. Please ensure CORS is properly configured on the backend.`);
+        }
+        
         // Throw error with status code for better error handling
         throw new Error(`Backend API returned ${response.status}: ${errorText || 'Unknown error'}`);
       }
@@ -98,7 +106,14 @@ export default function AIChatSidebar({
       };
     } catch (error) {
       console.error('Backend API error:', error);
-      return null;
+      
+      // Re-throw with more context if it's a network error
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        throw new Error(`Network Error: Unable to reach the backend server at ${API_ENDPOINTS.ai.chat}. This could be a CORS issue or the server might be down. Please check your connection and ensure the backend is running.`);
+      }
+      
+      // Re-throw the error so it can be handled properly
+      throw error;
     }
   };
 
@@ -123,10 +138,6 @@ export default function AIChatSidebar({
       // Call backend API (Attestify Django backend with Gemini)
       const backendResponse = await callBackendAPI(currentInput);
       
-      if (!backendResponse) {
-        throw new Error('Backend API is unavailable. Please check your connection or contact support.');
-      }
-
       const response = backendResponse.message;
       
       // Update session ID if provided
@@ -145,15 +156,19 @@ export default function AIChatSidebar({
       console.error('Error getting AI response:', error);
       
       // Show user-friendly error message
-      let errorMessage = 'Sorry, I encountered an error connecting to the AI service. ';
+      let errorMessage = 'Sorry, I encountered an error connecting to the AI service.\n\n';
       
-      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        errorMessage += 'This might be a CORS or network issue. Please check if the backend is running and properly configured.';
-      } else if (error instanceof Error) {
+      if (error instanceof Error) {
         errorMessage += error.message;
       } else {
         errorMessage += 'Please try again later.';
       }
+      
+      // Add helpful troubleshooting info
+      errorMessage += '\n\nTroubleshooting:\n';
+      errorMessage += '• Check if the backend server is running\n';
+      errorMessage += '• Verify CORS is configured on the backend\n';
+      errorMessage += '• Check your network connection';
       
       const errorResponse: Message = {
         role: 'assistant',
