@@ -66,7 +66,6 @@ export default function AIChatSidebar({
     }
 
     try {
-      console.log('Calling backend API:', API_ENDPOINTS.ai.chat);
       const response = await fetch(API_ENDPOINTS.ai.chat, {
         method: 'POST',
         headers: getAuthHeaders(address),
@@ -74,42 +73,33 @@ export default function AIChatSidebar({
           message,
           session_id: sessionId || undefined,
           wallet_address: address,
-          // Pass vault context for better AI responses
-          vault_context: {
-            balance: vaultBalance,
-            apy: currentAPY,
-            strategy: currentStrategy,
-            earnings: earnings,
-            min_deposit: minDeposit,
-            max_deposit: maxDeposit,
-          },
         }),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Backend API error:', response.status, errorText);
-        
-        // Check for CORS error (status 0 or network error)
-        if (response.status === 0 || !response.status) {
-          throw new Error(`CORS Error: The backend server at ${API_ENDPOINTS.ai.chat} is blocking requests from this origin. Please ensure CORS is properly configured on the backend.`);
+        let errorJson;
+        try {
+          errorJson = JSON.parse(errorText);
+        } catch {
+          // Not JSON, use raw text
         }
         
-        // Throw error with status code for better error handling
-        throw new Error(`Backend API returned ${response.status}: ${errorText || 'Unknown error'}`);
+        const errorMessage = errorJson?.error || errorJson?.detail || errorText || 'Unknown error';
+        throw new Error(`Backend API error (${response.status}): ${errorMessage}`);
       }
 
       const result = await response.json();
       return {
-        message: result.message || result.response || 'I received your message.',
+        message: result.message || 'I received your message.',
         session_id: result.session_id,
       };
     } catch (error) {
       console.error('Backend API error:', error);
       
-      // Re-throw with more context if it's a network error
+      // Handle network/CORS errors
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        throw new Error(`Network Error: Unable to reach the backend server at ${API_ENDPOINTS.ai.chat}. This could be a CORS issue or the server might be down. Please check your connection and ensure the backend is running.`);
+        throw new Error(`Network Error: Unable to reach the backend server. Please check your connection and ensure the backend is running.`);
       }
       
       // Re-throw the error so it can be handled properly
@@ -156,19 +146,13 @@ export default function AIChatSidebar({
       console.error('Error getting AI response:', error);
       
       // Show user-friendly error message
-      let errorMessage = 'Sorry, I encountered an error connecting to the AI service.\n\n';
+      let errorMessage = 'Sorry, I encountered an error. ';
       
       if (error instanceof Error) {
         errorMessage += error.message;
       } else {
         errorMessage += 'Please try again later.';
       }
-      
-      // Add helpful troubleshooting info
-      errorMessage += '\n\nTroubleshooting:\n';
-      errorMessage += '• Check if the backend server is running\n';
-      errorMessage += '• Verify CORS is configured on the backend\n';
-      errorMessage += '• Check your network connection';
       
       const errorResponse: Message = {
         role: 'assistant',
