@@ -32,7 +32,7 @@ class Conversation(models.Model):
     )
     model_used = models.CharField(
         max_length=50, 
-        default='gemini-2.0-flash-exp'
+        default='gemini-2.0-flash'
     )
     response_source = models.CharField(
         max_length=20,
@@ -116,7 +116,7 @@ class ConversationSession(models.Model):
             role=role,
             message=message,
             metadata=metadata or {},
-            model_used=model_used or 'gemini-2.0-flash-exp',
+            model_used=model_used or 'gemini-2.0-flash',
             response_source=source
         )
         self.message_count += 1
@@ -247,7 +247,6 @@ class StrategyExplanation(models.Model):
     pros = models.TextField(help_text="JSON array of advantages")
     cons = models.TextField(help_text="JSON array of disadvantages")
     
-    # Additional info
     recommended_minimum = models.CharField(
         max_length=50,
         blank=True,
