@@ -26,7 +26,7 @@ import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import { CONTRACT_CONFIG, CUSD_CONFIG, CONTRACT_ADDRESSES } from '@/abis';
 import VerificationModal from '@/components/VerificationModal';
-import AIChat from '@/components/AIChat';
+import AIChatSidebar from '@/components/AIChatSidebar';
 
 
 
@@ -35,7 +35,7 @@ export default function Dashboard() {
   const { address, isConnected } = useAccount();
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [activeSection, setActiveSection] = useState<'overview' | 'chat' | 'strategy' | 'analytics'>('overview');
+  const [activeSection, setActiveSection] = useState<'overview' | 'strategy' | 'analytics'>('overview');
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [isVerificationComplete, setIsVerificationComplete] = useState(false);
   const [depositStep, setDepositStep] = useState<'input' | 'approving' | 'depositing' | 'success' | 'error'>('input');
@@ -639,18 +639,6 @@ export default function Dashboard() {
             </button>
             
             <button
-              onClick={() => setActiveSection('chat')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
-                activeSection === 'chat'
-                  ? 'bg-green-50 text-green-700 border border-green-200'
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              <Bot className="h-5 w-5" />
-              AI Assistant
-            </button>
-            
-            <button
               onClick={() => setActiveSection('strategy')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
                 activeSection === 'strategy'
@@ -1028,21 +1016,6 @@ export default function Dashboard() {
               </div>
             </div>
           )}
-
-          {activeSection === 'chat' && (
-            <AIChat
-              vaultBalance={balanceDisplay}
-              currentAPY={apyDisplay}
-              currentStrategy={userStrategy === 0 ? 'Conservative' : userStrategy === 1 ? 'Balanced' : 'Growth'}
-              earnings={earningsDisplay}
-              minDeposit={minDeposit ? formatEther(minDeposit as bigint) : '1.00'}
-              maxDeposit={maxDeposit ? formatEther(maxDeposit as bigint) : '10,000.00'}
-              onDeposit={handleDeposit}
-              onWithdraw={handleWithdraw}
-              onStrategyChange={handleStrategyChange}
-            />
-          )}
-
 
           {activeSection === 'strategy' && (
             <div className="flex-1 p-6 overflow-y-auto">
@@ -1539,6 +1512,19 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+
+        {/* AI Assistant Sidebar */}
+        <AIChatSidebar
+          vaultBalance={balanceDisplay}
+          currentAPY={apyDisplay}
+          currentStrategy={userStrategy === 0 ? 'Conservative' : userStrategy === 1 ? 'Balanced' : 'Growth'}
+          earnings={earningsDisplay}
+          minDeposit={minDeposit ? formatEther(minDeposit as bigint) : '1.00'}
+          maxDeposit={maxDeposit ? formatEther(maxDeposit as bigint) : '10,000.00'}
+          onDeposit={handleDeposit}
+          onWithdraw={handleWithdraw}
+          onStrategyChange={handleStrategyChange}
+        />
       </div>
 
       {/* Verification Modal */}
