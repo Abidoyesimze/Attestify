@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { formatEther, parseEther } from 'viem';
 import { 
@@ -45,7 +45,8 @@ export default function Dashboard() {
   
   // Balance history state
   const [balanceHistory, setBalanceHistory] = useState<Array<{date: string, value: number, timestamp: number}>>([]);
-  const [lastBalanceUpdate, setLastBalanceUpdate] = useState<number>(0);
+  const lastBalanceUpdateRef = useRef<number>(0);
+  const lastBalanceTimestampRef = useRef<number>(0);
 
   // Check verification status
   const { data: isVerified, refetch: refetchVerification } = useReadContract({
@@ -292,10 +293,11 @@ export default function Dashboard() {
       const currentTime = Date.now();
       const currentBalance = parseFloat(balanceDisplay);
       
-      // Only update if balance changed significantly or it's been a while
-      if (Math.abs(currentBalance - lastBalanceUpdate) > 0.001 || 
-          (currentTime - lastBalanceUpdate) > 60 * 60 * 1000) {
-        
+      // Only update if balance changed significantly or it's been a while since last update
+      const balanceChanged = Math.abs(currentBalance - lastBalanceUpdateRef.current) > 0.001;
+      const timeElapsed = currentTime - lastBalanceTimestampRef.current > 60 * 60 * 1000; // 1 hour
+      
+      if (balanceChanged || timeElapsed) {
         const now = new Date();
         const newEntry = {
           date: now.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -308,10 +310,11 @@ export default function Dashboard() {
           return updated;
         });
         
-        setLastBalanceUpdate(currentBalance);
+        lastBalanceUpdateRef.current = currentBalance;
+        lastBalanceTimestampRef.current = currentTime;
       }
     }
-  }, [balance, balanceDisplay, lastBalanceUpdate]);
+  }, [balance, balanceDisplay]);
 
   // Handle approval success
   useEffect(() => {

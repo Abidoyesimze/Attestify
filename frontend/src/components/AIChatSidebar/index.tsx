@@ -35,29 +35,32 @@ export default function AIChatSidebar({
   onStrategyChange: _onStrategyChange
 }: AIChatSidebarProps) {
   const { address } = useAccount();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() => [{
+    role: 'assistant' as const,
+    content: `Hi! I'm your AI DeFi assistant powered by Attestify. 🤖\n\nI can help you:\n• Manage your vault\n• Analyze your strategy\n• Answer DeFi questions\n• Explain how Attestify works\n\nWhat would you like to know?`,
+    timestamp: new Date(),
+  }]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Initialize with welcome message
+  // Auto-scroll to bottom (only when new messages are added)
+  const prevMessagesLength = useRef(messages.length);
+  
   useEffect(() => {
-    const welcomeMessage: Message = {
-      role: 'assistant',
-      content: `Hi! I'm your AI DeFi assistant powered by Attestify. 🤖\n\nI can help you:\n• Manage your vault\n• Analyze your strategy\n• Answer DeFi questions\n• Explain how Attestify works\n\nWhat would you like to know?`,
-      timestamp: new Date(),
-    };
-    setMessages([welcomeMessage]);
-  }, []);
-
-  // Auto-scroll to bottom
-  useEffect(() => {
-    if (!isMinimized) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Only scroll if a new message was added (not just any change)
+    const hasNewMessage = messages.length > prevMessagesLength.current;
+    prevMessagesLength.current = messages.length;
+    
+    if (hasNewMessage && !isMinimized && messagesEndRef.current) {
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      });
     }
-  }, [messages, isMinimized]);
+  }, [messages.length, isMinimized]);
 
   // Call backend API (Attestify Django backend)
   const callBackendAPI = async (message: string): Promise<{ message: string; session_id?: string }> => {
