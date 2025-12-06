@@ -1,6 +1,6 @@
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from .models import Conversation, ConversationSession
@@ -15,11 +15,13 @@ ai_service = AIAssistantService()
 def chat(request):
     """
     Main chat endpoint for AI assistant
+    Supports both authenticated users and wallet-based access
     
-    POST /api/ai/chat/
+    POST /api/ai_assistant/chat/
     {
         "message": "What's the best strategy for me?",
-        "session_id": "optional-session-id"
+        "session_id": "optional-session-id",
+        "wallet_address": "optional-wallet-address" (from header X-Wallet-Address)
     }
     """
     user = request.user if request.user.is_authenticated else None
@@ -33,24 +35,44 @@ def chat(request):
         )
     
     if session_id:
-        session = get_object_or_404(
-            ConversationSession, 
-            session_id=session_id, 
-            user=user
-        )
+        try:
+            if user:
+                session = get_object_or_404(
+                    ConversationSession, 
+                    session_id=session_id, 
+                    user=user
+                )
+            else:
+                # For wallet-based access, find session by session_id and wallet in metadata
+                session = ConversationSession.objects.filter(
+                    session_id=session_id,
+                    user__isnull=True,
+                    user_context__wallet_address=wallet_address
+                ).first()
+                if not session:
+                    return Response(
+                        {'error': 'Session not found'},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+        except:
+            return Response(
+                {'error': 'Session not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
     else:
         session_id = str(uuid.uuid4())
         session = ConversationSession.objects.create(
-            user=user,
-            session_id=session_id
+            user=user,  # Can be None for wallet-based access
+            session_id=session_id,
+            user_context={'wallet_address': wallet_address} if wallet_address else {}
         )
     
     Conversation.objects.create(
-        user=user,
+        user=user,  # Can be None for wallet-based access
         session_id=session_id,
         message=user_message,
         role='user',
-        metadata={}
+        metadata={'wallet_address': wallet_address} if wallet_address else {}
     )
     
     recent_messages = Conversation.objects.filter(
@@ -65,41 +87,45 @@ def chat(request):
         })
     
     # Get user context data
+    # For wallet-based access, we'll use data from request if provided
     user_data = {
-        'is_new_user': not hasattr(user, 'deposits') or not user.deposits.exists(),
+        'is_new_user': True,  # Default for wallet-based access
     }
     
-    # Get latest balance if exists
-    if hasattr(user, 'balances'):
-        latest_balance = user.balances.first()
-        if latest_balance:
-            user_data.update({
-                'balance': float(latest_balance.current_balance),
-                'total_deposited': float(latest_balance.total_deposited),
-                'total_earned': float(latest_balance.total_earned),
-            })
-    
-    # Get current strategy from latest deposit
-    if hasattr(user, 'deposits'):
-        latest_deposit = user.deposits.filter(
-            transaction_type='deposit',
-            strategy__isnull=False
-        ).first()
-        if latest_deposit:
-            user_data['current_strategy'] = latest_deposit.strategy.name
+    # If authenticated user, get data from user model
+    if user:
+        user_data['is_new_user'] = not hasattr(user, 'deposits') or not user.deposits.exists()
+        
+        if hasattr(user, 'balances'):
+            latest_balance = user.balances.first()
+            if latest_balance:
+                user_data.update({
+                    'balance': float(latest_balance.current_balance),
+                    'total_deposited': float(latest_balance.total_deposited),
+                    'total_earned': float(latest_balance.total_earned),
+                })
+        
+        if hasattr(user, 'deposits'):
+            latest_deposit = user.deposits.filter(
+                transaction_type='deposit',
+                strategy__isnull=False
+            ).first()
+            if latest_deposit:
+                user_data['current_strategy'] = latest_deposit.strategy.name
     
     # Get AI response
     ai_response = ai_service.get_response(messages_for_api, user_data)
     
     # Save assistant message
     assistant_message = Conversation.objects.create(
-        user=user,
+        user=user,  # Can be None for wallet-based access
         session_id=session_id,
         message=ai_response['message'],
         role='assistant',
         metadata={
             'source': ai_response.get('source', 'api'),
-            'error': ai_response.get('error')
+            'error': ai_response.get('error'),
+            'wallet_address': wallet_address
         },
         response_source=ai_response.get('source', 'api')
     )

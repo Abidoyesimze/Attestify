@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { formatEther, parseEther } from 'viem';
 import { 
@@ -26,7 +26,7 @@ import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import { CONTRACT_CONFIG, CUSD_CONFIG, CONTRACT_ADDRESSES } from '@/abis';
 import VerificationModal from '@/components/VerificationModal';
-import AIChat from '@/components/AIChat';
+import AIChatSidebar from '@/components/AIChatSidebar';
 
 
 
@@ -35,7 +35,7 @@ export default function Dashboard() {
   const { address, isConnected } = useAccount();
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [activeSection, setActiveSection] = useState<'overview' | 'chat' | 'strategy' | 'analytics'>('overview');
+  const [activeSection, setActiveSection] = useState<'overview' | 'strategy' | 'analytics'>('overview');
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [isVerificationComplete, setIsVerificationComplete] = useState(false);
   const [depositStep, setDepositStep] = useState<'input' | 'approving' | 'depositing' | 'success' | 'error'>('input');
@@ -45,7 +45,8 @@ export default function Dashboard() {
   
   // Balance history state
   const [balanceHistory, setBalanceHistory] = useState<Array<{date: string, value: number, timestamp: number}>>([]);
-  const [lastBalanceUpdate, setLastBalanceUpdate] = useState<number>(0);
+  const lastBalanceUpdateRef = useRef<number>(0);
+  const lastBalanceTimestampRef = useRef<number>(0);
 
   // Check verification status
   const { data: isVerified, refetch: refetchVerification } = useReadContract({
@@ -292,10 +293,11 @@ export default function Dashboard() {
       const currentTime = Date.now();
       const currentBalance = parseFloat(balanceDisplay);
       
-      // Only update if balance changed significantly or it's been a while
-      if (Math.abs(currentBalance - lastBalanceUpdate) > 0.001 || 
-          (currentTime - lastBalanceUpdate) > 60 * 60 * 1000) {
-        
+      // Only update if balance changed significantly or it's been a while since last update
+      const balanceChanged = Math.abs(currentBalance - lastBalanceUpdateRef.current) > 0.001;
+      const timeElapsed = currentTime - lastBalanceTimestampRef.current > 60 * 60 * 1000; // 1 hour
+      
+      if (balanceChanged || timeElapsed) {
         const now = new Date();
         const newEntry = {
           date: now.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -308,10 +310,11 @@ export default function Dashboard() {
           return updated;
         });
         
-        setLastBalanceUpdate(currentBalance);
+        lastBalanceUpdateRef.current = currentBalance;
+        lastBalanceTimestampRef.current = currentTime;
       }
     }
-  }, [balance, balanceDisplay, lastBalanceUpdate]);
+  }, [balance, balanceDisplay]);
 
   // Handle approval success
   useEffect(() => {
@@ -636,18 +639,6 @@ export default function Dashboard() {
             >
               <Home className="h-5 w-5" />
               Overview
-            </button>
-            
-            <button
-              onClick={() => setActiveSection('chat')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
-                activeSection === 'chat'
-                  ? 'bg-green-50 text-green-700 border border-green-200'
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              <Bot className="h-5 w-5" />
-              AI Assistant
             </button>
             
             <button
@@ -1028,21 +1019,6 @@ export default function Dashboard() {
               </div>
             </div>
           )}
-
-          {activeSection === 'chat' && (
-            <AIChat
-              vaultBalance={balanceDisplay}
-              currentAPY={apyDisplay}
-              currentStrategy={userStrategy === 0 ? 'Conservative' : userStrategy === 1 ? 'Balanced' : 'Growth'}
-              earnings={earningsDisplay}
-              minDeposit={minDeposit ? formatEther(minDeposit as bigint) : '1.00'}
-              maxDeposit={maxDeposit ? formatEther(maxDeposit as bigint) : '10,000.00'}
-              onDeposit={handleDeposit}
-              onWithdraw={handleWithdraw}
-              onStrategyChange={handleStrategyChange}
-            />
-          )}
-
 
           {activeSection === 'strategy' && (
             <div className="flex-1 p-6 overflow-y-auto">
@@ -1539,6 +1515,19 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+
+        {/* AI Assistant Sidebar */}
+        <AIChatSidebar
+          vaultBalance={balanceDisplay}
+          currentAPY={apyDisplay}
+          currentStrategy={userStrategy === 0 ? 'Conservative' : userStrategy === 1 ? 'Balanced' : 'Growth'}
+          earnings={earningsDisplay}
+          minDeposit={minDeposit ? formatEther(minDeposit as bigint) : '1.00'}
+          maxDeposit={maxDeposit ? formatEther(maxDeposit as bigint) : '10,000.00'}
+          onDeposit={handleDeposit}
+          onWithdraw={handleWithdraw}
+          onStrategyChange={handleStrategyChange}
+        />
       </div>
 
       {/* Verification Modal */}
