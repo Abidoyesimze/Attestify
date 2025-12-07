@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { formatEther, parseEther } from 'viem';
 import { 
@@ -222,12 +222,13 @@ export default function Dashboard() {
     hash: strategyHash,
   });
 
-  const balanceDisplay = balance ? formatEther(balance as bigint) : '0.00';
-  const earningsDisplay = earnings ? formatEther(earnings as bigint) : '0.00';
-  const apyDisplay = currentAPY ? (Number(currentAPY) / 100).toFixed(2) : '0.00';
+  // Memoize display values to prevent unnecessary re-renders
+  const balanceDisplay = useMemo(() => balance ? formatEther(balance as bigint) : '0.00', [balance]);
+  const earningsDisplay = useMemo(() => earnings ? formatEther(earnings as bigint) : '0.00', [earnings]);
+  const apyDisplay = useMemo(() => currentAPY ? (Number(currentAPY) / 100).toFixed(2) : '0.00', [currentAPY]);
 
-  // Generate balance history chart data
-  const generateChartData = () => {
+  // Generate balance history chart data (pure function, no state mutations)
+  const chartData = useMemo(() => {
     const currentBalance = parseFloat(balanceDisplay);
     const now = new Date();
     
@@ -247,45 +248,29 @@ export default function Dashboard() {
       return initialData;
     }
     
-    // Use existing history and add current balance if it's new
-    const lastEntry = balanceHistory[balanceHistory.length - 1];
-    const currentTime = now.getTime();
-    
-    // If balance changed or it's been more than 1 hour, add new entry
-    if (Math.abs(lastEntry.value - currentBalance) > 0.001 || 
-        (currentTime - lastEntry.timestamp) > 60 * 60 * 1000) {
-      const newEntry = {
-        date: now.toLocaleDateString('en-US', { weekday: 'short' }),
-        value: parseFloat(currentBalance.toFixed(2)),
-        timestamp: currentTime
-      };
-      
-      // Keep only last 7 days
-      const updatedHistory = [...balanceHistory.slice(-6), newEntry];
-      setBalanceHistory(updatedHistory);
-      return updatedHistory;
-    }
-    
+    // Use existing history
     return balanceHistory;
-  };
+  }, [balanceHistory, balanceDisplay]);
 
-  const chartData = generateChartData();
-
-  // Debug logging
+  // Debug logging (removed display values from dependencies to prevent re-renders)
   useEffect(() => {
     if (earnings) {
       console.log('💰 Earnings from contract:', earnings.toString());
-      console.log('💰 Earnings formatted:', earningsDisplay);
+      const formatted = formatEther(earnings as bigint);
+      console.log('💰 Earnings formatted:', formatted);
     }
     if (currentAPY) {
       console.log('📈 APY from contract:', currentAPY.toString());
-      console.log('📈 APY formatted:', apyDisplay);
+      const formatted = (Number(currentAPY) / 100).toFixed(2);
+      console.log('📈 APY formatted:', formatted);
     }
     if (balance && earnings) {
-      const roi = (parseFloat(earningsDisplay) / parseFloat(balanceDisplay)) * 100;
+      const balanceVal = parseFloat(formatEther(balance as bigint));
+      const earningsVal = parseFloat(formatEther(earnings as bigint));
+      const roi = (earningsVal / balanceVal) * 100;
       console.log('📊 ROI calculation:', `${roi.toFixed(6)}%`);
     }
-  }, [earnings, currentAPY, earningsDisplay, apyDisplay, balance, balanceDisplay]);
+  }, [earnings, currentAPY, balance]);
 
   // Track balance changes for chart
   useEffect(() => {
