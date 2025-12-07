@@ -38,6 +38,16 @@ export default function AIChatSidebar({
   onWithdraw: _onWithdraw,
   onStrategyChange: _onStrategyChange
 }: AIChatSidebarProps) {
+  // Props are kept for future use but currently unused
+  void _vaultBalance;
+  void _currentAPY;
+  void _currentStrategy;
+  void _earnings;
+  void _minDeposit;
+  void _maxDeposit;
+  void _onDeposit;
+  void _onWithdraw;
+  void _onStrategyChange;
   const [messages, setMessages] = useState<Message[]>(() => {
     // Load messages from localStorage on mount
     if (typeof window !== 'undefined') {
@@ -145,20 +155,6 @@ export default function AIChatSidebar({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isMinimized]);
 
-  // Check backend connection status
-  const checkConnection = async () => {
-    setConnectionStatus('checking');
-    try {
-      const response = await fetch(API_ENDPOINTS.ai.chat, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: 'ping' }),
-      });
-      setConnectionStatus(response.ok ? 'connected' : 'disconnected');
-    } catch {
-      setConnectionStatus('disconnected');
-    }
-  };
 
   // Call backend API with retry logic
   const callBackendAPI = async (
@@ -483,7 +479,6 @@ export default function AIChatSidebar({
 
   // Simple markdown renderer
   const renderMarkdown = (text: string) => {
-    const displayText = searchQuery ? highlightSearch(text, searchQuery) : text;
     // Split by code blocks first
     const parts = text.split(/(```[\s\S]*?```|`[^`]+`)/);
     
@@ -807,7 +802,7 @@ export default function AIChatSidebar({
         {filteredMessages.length === 0 && searchQuery ? (
           <div className="text-center py-8 text-gray-500">
             <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p>No messages found matching "{searchQuery}"</p>
+            <p>No messages found matching &quot;{searchQuery}&quot;</p>
           </div>
         ) : (
           filteredMessages.map((message, index) => {
