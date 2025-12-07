@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Bot, Send, Loader2, TrendingUp, Target, DollarSign, Minimize2, Copy, Check, RefreshCw, X, Clock, Edit2, Trash2, Sparkles, Search, Download, ThumbsUp, ThumbsDown, Share2 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -457,7 +457,7 @@ export default function AIChatSidebar({
   };
 
   // Highlight search terms in text (returns JSX)
-  const highlightSearch = (text: string, query: string): JSX.Element => {
+  const highlightSearch = (text: string, query: string): React.ReactElement => {
     if (!query.trim()) {
       return <span>{text}</span>;
     }
