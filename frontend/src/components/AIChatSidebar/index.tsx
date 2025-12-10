@@ -75,7 +75,7 @@ export default function AIChatSidebar({
         body: JSON.stringify({
           message,
           session_id: sessionId || undefined,
-          wallet_address: address,
+          // wallet_address: address,
         }),
       });
 

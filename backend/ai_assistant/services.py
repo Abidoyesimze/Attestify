@@ -119,13 +119,13 @@ What specific concept would you like me to explain?"""
         
         # General greeting/help
         elif any(word in message_lower for word in ['hello', 'hi', 'hey', 'help', 'start']):
-            return """Hello! I'm your Attestify AI assistant powered by Gemini. I can help you with:
+            return """Hello! I'm your Attestify AI assistant . I can help you with:
 
-💰 Choosing the right investment strategy
-🔒 Understanding platform security
-📊 Tracking your earnings
-💡 Learning about DeFi concepts
-❓ Answering any questions about Attestify
+ -Choosing the right investment strategy
+ -Understanding platform security
+ -Tracking your earnings
+ -Learning about DeFi concepts
+ -Answering any questions about Attestify
 
 What would you like to know?"""
         
