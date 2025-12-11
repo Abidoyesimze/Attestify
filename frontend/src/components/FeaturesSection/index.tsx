@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { 
@@ -15,6 +15,7 @@ import {
 export default function FeaturesSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true });
+  const reduceMotion = useReducedMotion();
 
   const features = [
     {
@@ -112,7 +113,7 @@ export default function FeaturesSection() {
         </motion.div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-7 lg:gap-8">
           {features.map((feature, index) => (
             <motion.div
               key={index}
@@ -127,7 +128,7 @@ export default function FeaturesSection() {
                 y: -8,
                 scale: 1.02,
               }}
-              className="group bg-white rounded-2xl p-8 shadow-sm hover:shadow-2xl transition-all duration-300 border border-gray-100 relative overflow-hidden"
+              className="group bg-white rounded-2xl p-6 sm:p-7 lg:p-8 shadow-sm hover:shadow-2xl transition-all duration-300 border border-gray-100 relative overflow-hidden min-h-[260px] sm:min-h-[280px]"
             >
               {/* Background Gradient on Hover */}
               <motion.div
@@ -139,14 +140,15 @@ export default function FeaturesSection() {
 
               {/* Icon */}
               <motion.div
-                whileHover={{ 
-                  rotate: 360,
-                  scale: 1.1,
-                }}
-                transition={{ duration: 0.6 }}
-                className={`inline-flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br ${feature.gradient} mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}
+                whileHover={
+                  reduceMotion
+                    ? { scale: 1.02 }
+                    : { rotate: 360, scale: 1.1 }
+                }
+                transition={reduceMotion ? { duration: 0.2 } : { duration: 0.6 }}
+                className={`inline-flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl bg-gradient-to-br ${feature.gradient} mb-5 sm:mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}
               >
-                <feature.icon className="h-7 w-7 text-white" />
+                <feature.icon className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
               </motion.div>
 
               {/* Content */}
@@ -164,7 +166,7 @@ export default function FeaturesSection() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={isInView ? { opacity: 1, x: 0 } : {}}
                 transition={{ duration: 0.4, delay: feature.delay + 0.4 }}
-                className="text-gray-600 leading-relaxed relative z-10"
+                className="text-gray-600 leading-relaxed relative z-10 line-clamp-4"
               >
                 {feature.description}
               </motion.p>
