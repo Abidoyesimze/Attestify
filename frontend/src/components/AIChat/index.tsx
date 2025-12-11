@@ -297,7 +297,7 @@ export default function AIChat({
   return (
     <div className="flex flex-col h-full">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 bg-gray-50">
         {messages.map((message, index) => (
           <div
             key={index}
@@ -310,9 +310,9 @@ export default function AIChat({
                 <Bot className="h-5 w-5 text-white" />
               </div>
             )}
-            <div className="flex flex-col max-w-2xl">
+            <div className="flex flex-col max-w-full sm:max-w-2xl">
               <div
-                className={`rounded-2xl p-6 shadow-sm ${
+                className={`rounded-2xl p-5 sm:p-6 shadow-sm ${
                   message.role === 'user'
                     ? 'bg-gradient-to-r from-green-600 to-blue-600 text-white'
                     : 'bg-white border border-gray-200'
@@ -334,7 +334,7 @@ export default function AIChat({
               {message.actionable && (
                 <button
                   onClick={() => executeAction(message.actionable)}
-                  className="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-all shadow-md"
+                  className="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-all shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
                 >
                   ✓ Execute Action
                 </button>
@@ -358,8 +358,8 @@ export default function AIChat({
       </div>
 
       {/* Input Area */}
-      <div className="p-6 border-t border-gray-200 bg-white">
-        <form onSubmit={handleSubmit} className="flex gap-3">
+      <div className="p-4 sm:p-6 border-t border-gray-200 bg-white">
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
           <input
             type="text"
             value={input}
@@ -371,7 +371,7 @@ export default function AIChat({
           <button
             type="submit"
             disabled={isLoading || !input.trim()}
-            className="px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-xl font-medium hover:from-green-700 hover:to-blue-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-xl font-medium hover:from-green-700 hover:to-blue-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-full sm:w-auto focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
           >
             <Send className="h-5 w-5" />
           </button>
