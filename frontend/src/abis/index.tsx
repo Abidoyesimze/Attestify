@@ -1,18 +1,16 @@
 import VaultABI from './Vault.json';
-import { CONTRACT_ADDRESSES as CONFIG_ADDRESSES } from '@/config/contracts';
 
-// Import ABI from JSON file
-export const ATTESTIFY_VAULT_ABI = VaultABI.abi;
-
-// Re-export contract addresses for backward compatibility
-// Use the centralized config from @/config/contracts
+// Contract addresses
 export const CONTRACT_ADDRESSES = {
-  ATTESTIFY_VAULT: CONFIG_ADDRESSES.celoSepolia.vault as `0x${string}`,
-  CUSD_TOKEN: CONFIG_ADDRESSES.celoSepolia.cUSD as `0x${string}`,
+  ATTESTIFY_VAULT: "0x9c75cC4A2D319363158dA01d97d5EFec55CED742" as `0x${string}`, // Fixed AttestifyVault
+  CUSD_TOKEN: "0xdE9e4C3ce781b4bA68120d6261cbad65ce0aB00b" as `0x${string}`, // Real Celo Sepolia cUSD
 } as const;
 
 // Self Protocol Config ID
 export const SELF_PROTOCOL_CONFIG_ID = "0x986751c577aa5cfaef6f49fa2a46fa273b04e1bf78250966b8037dccf8afd399";
+
+// Import ABI from JSON file
+export const ATTESTIFY_VAULT_ABI = VaultABI.abi;
 
 // ERC20 Token ABI (for cUSD approval and balance checks)
 export const ERC20_ABI = [

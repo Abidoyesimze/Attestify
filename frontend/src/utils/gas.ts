@@ -1,4 +1,6 @@
-import { type Address, type EstimateGasParameters } from 'viem';
+/**
+ * Gas estimation utilities for contract interactions
+ */
 
 /**
  * Gas estimation utilities for contract interactions
