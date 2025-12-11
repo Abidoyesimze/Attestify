@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useReducedMotion } from 'framer-motion';
 import { Bot, Send, Loader2, TrendingUp, Target, DollarSign, Minimize2, Copy, Check, RefreshCw, X, Clock, Edit2, Trash2, Sparkles, Search, Download, ThumbsUp, ThumbsDown, Share2 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -92,6 +93,7 @@ export default function AIChatSidebar({
   const inputRef = useRef<HTMLInputElement>(null);
   const editInputRef = useRef<HTMLTextAreaElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const reduceMotion = useReducedMotion();
 
   // Save messages to localStorage whenever they change
   useEffect(() => {
@@ -798,7 +800,7 @@ export default function AIChatSidebar({
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4" role="log" aria-live="polite" aria-label="Chat messages">
+      <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-3.5 text-[12px] leading-snug" role="log" aria-live="polite" aria-label="Chat messages">
         {filteredMessages.length === 0 && searchQuery ? (
           <div className="text-center py-8 text-gray-500">
             <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -826,9 +828,9 @@ export default function AIChatSidebar({
                   <Bot className="h-3.5 w-3.5 text-white" />
                 </div>
               )}
-              <div className={`flex flex-col max-w-[85%] md:max-w-[80%] ${isUser ? 'items-end' : 'items-start'}`}>
+              <div className={`flex flex-col max-w-[78%] md:max-w-[68%] ${isUser ? 'items-end' : 'items-start'}`}>
                 <div
-                  className={`rounded-lg p-3 relative ${
+                  className={`rounded-lg px-3 py-2 relative text-[12px] leading-snug break-words overflow-hidden ${
                     isUser
                       ? 'bg-green-600 text-white'
                       : isError
@@ -888,7 +890,7 @@ export default function AIChatSidebar({
                   )}
                   
                   {/* Message actions - visible on hover or touch */}
-                  <div className={`absolute -right-9 md:-right-8 top-2 flex gap-1 opacity-0 md:group-hover:opacity-100 transition-opacity touch-manipulation ${isUser ? 'flex-row-reverse' : ''} md:block`}>
+                  <div className={`hidden md:block absolute -right-9 lg:-right-8 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity touch-manipulation ${isUser ? 'flex-row-reverse' : ''}`}>
                     {message.content && !isLoading && !isEditing && (
                       <div className="flex flex-col gap-1 bg-white rounded-lg shadow-lg p-1 border border-gray-200">
                         <button
@@ -994,9 +996,9 @@ export default function AIChatSidebar({
             <div className="bg-gray-100 rounded-lg p-3">
               <div className="flex items-center gap-2">
                 <div className="flex gap-1">
-                  <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className={`h-2 w-2 bg-gray-400 rounded-full ${reduceMotion ? '' : 'animate-bounce'}`} style={{ animationDelay: '0ms' }} />
+                  <div className={`h-2 w-2 bg-gray-400 rounded-full ${reduceMotion ? '' : 'animate-bounce'}`} style={{ animationDelay: '150ms' }} />
+                  <div className={`h-2 w-2 bg-gray-400 rounded-full ${reduceMotion ? '' : 'animate-bounce'}`} style={{ animationDelay: '300ms' }} />
                 </div>
                 <span className="text-sm text-gray-600">AI is typing...</span>
               </div>
@@ -1009,7 +1011,7 @@ export default function AIChatSidebar({
 
       {/* Input Area */}
       <div className="p-3 md:p-4 border-t border-gray-200 bg-white">
-        <form onSubmit={handleSubmit} className="flex gap-2 mb-2 md:mb-3">
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 sm:gap-2.5 mb-2 md:mb-3">
           <input
             ref={inputRef}
             type="text"
@@ -1024,7 +1026,7 @@ export default function AIChatSidebar({
           <button
             type="submit"
             disabled={isLoading || !input.trim()}
-            className="px-3 md:px-4 py-2 md:py-2.5 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg font-medium hover:from-green-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center touch-manipulation min-w-[44px] min-h-[44px] justify-center"
+            className="px-3 md:px-4 py-2 md:py-2.5 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg font-medium hover:from-green-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center touch-manipulation min-w-[44px] min-h-[44px] justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 w-full sm:w-auto"
             aria-label="Send message"
           >
             {isLoading ? (

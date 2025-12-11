@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Shield, Menu, X } from 'lucide-react';
 import ConnectWalletButton from '@/components/ConnectWalletButton';
 import Link from 'next/link';
@@ -9,6 +9,7 @@ import Link from 'next/link';
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,17 +28,19 @@ export default function Navbar() {
 
   return (
     <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
+      role="navigation"
+      aria-label="Primary"
+      initial={shouldReduceMotion ? false : { y: -100 }}
+      animate={shouldReduceMotion ? {} : { y: 0 }}
+      transition={shouldReduceMotion ? undefined : { duration: 0.6, ease: 'easeOut' }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
           ? 'bg-white/95 backdrop-blur-lg border-b border-gray-200 shadow-lg'
           : 'bg-white/80 backdrop-blur-md border-b border-gray-100'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+      <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-8">
+        <div className="flex justify-between items-center h-14 md:h-16">
           {/* Logo */}
           <motion.div
             whileHover={{ scale: 1.05 }}
@@ -97,10 +100,14 @@ export default function Navbar() {
 
           {/* Mobile Menu Button */}
           <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
+            type="button"
+            aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-menu"
+            whileHover={shouldReduceMotion ? undefined : { scale: 1.05 }}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
           >
             <AnimatePresence mode="wait">
               {isMobileMenuOpen ? (
@@ -135,10 +142,11 @@ export default function Navbar() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
-              className="md:hidden border-t border-gray-200 bg-white/95 backdrop-blur-lg"
+              transition={shouldReduceMotion ? { duration: 0.1 } : { duration: 0.3 }}
+              className="md:hidden border-t border-gray-200 bg-white/95 backdrop-blur-lg max-h-[70vh] overflow-y-auto"
+              id="mobile-menu"
             >
-              <div className="py-4 space-y-4">
+              <div className="py-4 space-y-3 px-2">
                 {navItems.map((item, index) => (
                   <motion.a
                     key={item.name}
@@ -147,7 +155,7 @@ export default function Navbar() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="block px-4 py-2 text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200"
+                    className="block px-3 py-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 font-medium transition-colors duration-200"
                   >
                     {item.name}
                   </motion.a>
@@ -156,7 +164,7 @@ export default function Navbar() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.4 }}
-                  className="px-4"
+                  className="px-3 pb-1"
                 >
                   <ConnectWalletButton />
                 </motion.div>

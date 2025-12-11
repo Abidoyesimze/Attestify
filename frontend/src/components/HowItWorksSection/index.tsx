@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { Shield, DollarSign, TrendingUp } from 'lucide-react';
@@ -8,6 +8,7 @@ import { Shield, DollarSign, TrendingUp } from 'lucide-react';
 export default function HowItWorksSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true });
+  const reduceMotion = useReducedMotion();
 
   const steps = [
     {
@@ -92,7 +93,7 @@ export default function HowItWorksSection() {
         </motion.div>
 
         {/* Steps */}
-        <div className="grid lg:grid-cols-3 gap-12 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-8">
           {steps.map((step, index) => (
             <motion.div
               key={index}
@@ -118,7 +119,7 @@ export default function HowItWorksSection() {
 
               <motion.div
                 whileHover={{ scale: 1.02 }}
-                className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 relative z-10 hover:shadow-2xl transition-all duration-300"
+              className="bg-white rounded-2xl p-6 sm:p-7 lg:p-8 shadow-lg border border-gray-100 relative z-10 hover:shadow-2xl transition-all duration-300"
               >
                 {/* Step Number */}
                 <motion.div
@@ -129,12 +130,12 @@ export default function HowItWorksSection() {
                     delay: step.delay + 0.2,
                     ease: 'backOut'
                   }}
-                  className="absolute -top-6 left-8"
+                  className="absolute -top-5 left-6 sm:left-8"
                 >
                   <motion.div
                     whileHover={{ rotate: 360 }}
                     transition={{ duration: 0.6 }}
-                    className={`h-12 w-12 rounded-xl bg-gradient-to-br ${step.gradient} flex items-center justify-center text-white font-bold text-lg shadow-lg`}
+                  className={`h-11 w-11 sm:h-12 sm:w-12 rounded-xl bg-gradient-to-br ${step.gradient} flex items-center justify-center text-white font-bold text-base sm:text-lg shadow-lg`}
                   >
                     {step.number}
                   </motion.div>
@@ -202,31 +203,35 @@ export default function HowItWorksSection() {
                 </motion.div>
 
                 {/* Floating Particles */}
-                <motion.div
-                  animate={{
-                    y: [0, -10, 0],
-                    opacity: [0.3, 0.8, 0.3],
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }}
-                  className="absolute top-4 right-4 w-1 h-1 bg-green-400 rounded-full"
-                />
-                <motion.div
-                  animate={{
-                    y: [0, -15, 0],
-                    opacity: [0.2, 0.6, 0.2],
-                  }}
-                  transition={{
-                    duration: 4,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                    delay: 1,
-                  }}
-                  className="absolute bottom-6 right-6 w-1 h-1 bg-blue-400 rounded-full"
-                />
+                {!reduceMotion && (
+                  <>
+                    <motion.div
+                      animate={{
+                        y: [0, -10, 0],
+                        opacity: [0.3, 0.8, 0.3],
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: 'easeInOut',
+                      }}
+                      className="absolute top-4 right-4 w-1 h-1 bg-green-400 rounded-full"
+                    />
+                    <motion.div
+                      animate={{
+                        y: [0, -15, 0],
+                        opacity: [0.2, 0.6, 0.2],
+                      }}
+                      transition={{
+                        duration: 4,
+                        repeat: Infinity,
+                        ease: 'easeInOut',
+                        delay: 1,
+                      }}
+                      className="absolute bottom-6 right-6 w-1 h-1 bg-blue-400 rounded-full"
+                    />
+                  </>
+                )}
               </motion.div>
             </motion.div>
           ))}
