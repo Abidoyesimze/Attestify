@@ -1,10 +1,11 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Shield, ArrowRight, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 
 export default function HeroSection() {
+  const reduceMotion = useReducedMotion();
   const trustIndicators = [
     { icon: Shield, text: 'Zero personal data stored', highlight: 'Zero' },
     { icon: DollarSign, text: 'fees', highlight: '$0' },
@@ -12,33 +13,49 @@ export default function HeroSection() {
   ];
 
   return (
-    <section className="relative overflow-hidden pt-32 pb-20">
+    <section className="relative overflow-hidden pt-24 sm:pt-28 md:pt-32 pb-14 sm:pb-18 md:pb-20">
       {/* Animated Background */}
       <div className="absolute inset-0 -z-10">
         <motion.div
-          animate={{
-            scale: [1, 1.1, 1],
-            rotate: [0, 5, 0],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: 'linear',
-          }}
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-gradient-to-br from-green-100/20 via-emerald-100/10 to-teal-100/20 rounded-full blur-3xl"
+          animate={
+            reduceMotion
+              ? { scale: 1, rotate: 0 }
+              : {
+                  scale: [1, 1.1, 1],
+                  rotate: [0, 5, 0],
+                }
+          }
+          transition={
+            reduceMotion
+              ? undefined
+              : {
+                  duration: 20,
+                  repeat: Infinity,
+                  ease: 'linear',
+                }
+          }
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-[440px] h-[440px] sm:w-[660px] sm:h-[660px] lg:w-[800px] lg:h-[800px] bg-gradient-to-br from-green-100/20 via-emerald-100/10 to-teal-100/20 rounded-full blur-2xl sm:blur-3xl"
         />
         <motion.div
-          animate={{
-            scale: [1.1, 1, 1.1],
-            rotate: [0, -5, 0],
-          }}
-          transition={{
-            duration: 25,
-            repeat: Infinity,
-            ease: 'linear',
-            delay: 5,
-          }}
-          className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-blue-100/15 via-cyan-100/10 to-green-100/15 rounded-full blur-3xl"
+          animate={
+            reduceMotion
+              ? { scale: 1, rotate: 0 }
+              : {
+                  scale: [1.05, 1, 1.05],
+                  rotate: [0, -5, 0],
+                }
+          }
+          transition={
+            reduceMotion
+              ? undefined
+              : {
+                  duration: 25,
+                  repeat: Infinity,
+                  ease: 'linear',
+                  delay: 5,
+                }
+          }
+          className="absolute bottom-0 right-1/4 w-[360px] h-[360px] sm:w-[520px] sm:h-[520px] lg:w-[600px] lg:h-[600px] bg-gradient-to-br from-blue-100/15 via-cyan-100/10 to-green-100/15 rounded-full blur-2xl sm:blur-3xl"
         />
       </div>
 
@@ -65,7 +82,7 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="text-5xl md:text-7xl font-bold text-gray-900 leading-tight mb-6"
+            className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight mb-5 sm:mb-6"
           >
             Automated DeFi
             <motion.span
@@ -80,7 +97,7 @@ export default function HeroSection() {
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 1.1 }}
-              className="block text-5xl md:text-6xl mt-2"
+              className="block text-3xl sm:text-5xl md:text-6xl mt-2"
             >
               on Celo
             </motion.span>
@@ -91,7 +108,7 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed"
+            className="text-base sm:text-lg md:text-xl text-gray-600 mb-8 leading-relaxed"
           >
             Verify once, earn forever. We <motion.span
               initial={{ scale: 1 }}
@@ -121,15 +138,15 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.7 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
+            className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center mb-10 sm:mb-12"
           >
             <motion.button
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
-              className="group px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
+              className="group px-6 sm:px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 w-full sm:w-auto"
             >
-              <Link href="/dashboard">
-                Launch App
+              <Link href="/dashboard" className="flex items-center gap-2">
+                <span>Launch App</span>
                 <motion.div
                   animate={{ x: [0, 5, 0] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
@@ -143,7 +160,7 @@ export default function HeroSection() {
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
               href="#how-it-works"
-              className="px-8 py-4 bg-white/80 border-2 border-gray-200 text-gray-900 rounded-2xl font-semibold hover:border-gray-300 hover:shadow-md transition-all duration-300 flex items-center justify-center backdrop-blur-sm"
+              className="px-6 sm:px-8 py-4 bg-white/80 border-2 border-gray-200 text-gray-900 rounded-2xl font-semibold hover:border-gray-300 hover:shadow-md transition-all duration-300 flex items-center justify-center backdrop-blur-sm w-full sm:w-auto"
             >
               See How It Works
             </motion.a>
@@ -154,7 +171,7 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.9 }}
-            className="flex flex-wrap justify-center items-center gap-6 text-sm text-gray-600"
+            className="flex flex-wrap justify-center items-center gap-3 sm:gap-5 text-sm text-gray-600 px-2"
           >
             {trustIndicators.map((indicator, index) => (
               <motion.div
@@ -163,10 +180,10 @@ export default function HeroSection() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, delay: 1.1 + index * 0.1 }}
                 whileHover={{ scale: 1.05 }}
-                className="flex items-center gap-2 px-4 py-2 bg-white/60 rounded-full backdrop-blur-sm hover:bg-white/80 transition-colors"
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/60 rounded-full backdrop-blur-sm hover:bg-white/80 transition-colors"
               >
-                <indicator.icon className="h-5 w-5 text-green-600" />
-                <span>
+                <indicator.icon className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                <span className="text-xs sm:text-sm">
                   <strong className="text-gray-900">{indicator.highlight}</strong> {indicator.text}
                 </span>
               </motion.div>
