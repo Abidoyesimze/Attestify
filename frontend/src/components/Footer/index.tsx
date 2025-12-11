@@ -1,14 +1,16 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useInView } from 'framer-motion';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Shield, Github, Twitter, MessageCircle, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Footer() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true });
+  const reduceMotion = useReducedMotion();
+  const [openSection, setOpenSection] = useState<string | null>(null);
 
   const footerLinks = {
     product: [
@@ -34,26 +36,98 @@ export default function Footer() {
     { icon: MessageCircle, href: '#', label: 'Discord' },
   ];
 
+  const Section = ({
+    title,
+    links,
+    id,
+  }: {
+    title: string;
+    links: { name: string; href: string; external?: boolean }[];
+    id: string;
+  }) => {
+    const isOpen = openSection === id;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={isInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.6, delay: 0.1 }}
+        className="w-full"
+      >
+        <button
+          type="button"
+          onClick={() => setOpenSection(isOpen ? null : id)}
+          className="md:pointer-events-none w-full flex items-center justify-between md:justify-start md:gap-2 mb-3 md:mb-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-500"
+          aria-expanded={isOpen}
+          aria-controls={`${id}-links`}
+        >
+          <h4 className="font-semibold text-white">{title}</h4>
+          <span className="md:hidden text-gray-400">{isOpen ? '−' : '+'}</span>
+        </button>
+        <motion.ul
+          id={`${id}-links`}
+          initial={false}
+          animate={{ height: isOpen || typeof window === 'undefined' ? 'auto' : 0, opacity: isOpen || typeof window === 'undefined' ? 1 : 0 }}
+          className={`space-y-2 overflow-hidden ${isOpen || typeof window === 'undefined' ? 'pb-1' : ''} md:opacity-100 md:h-auto md:pb-0`}
+        >
+          {links.map((link, index) => (
+            <motion.li
+              key={index}
+              initial={{ opacity: 0, x: -20 }}
+              animate={isInView ? { opacity: 1, x: 0 } : {}}
+              transition={{ duration: 0.4, delay: 0.3 + index * 0.1 }}
+            >
+              <a
+                href={link.href}
+                target={link.external ? '_blank' : '_self'}
+                rel={link.external ? 'noopener noreferrer' : ''}
+                className="text-sm text-gray-400 hover:text-white transition-colors duration-200 flex items-center gap-1 group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-500"
+              >
+                {link.name}
+                {link.external && (
+                  <motion.div
+                    whileHover={reduceMotion ? undefined : { scale: 1.1, rotate: 45 }}
+                    className="transition-transform duration-200"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </motion.div>
+                )}
+              </a>
+            </motion.li>
+          ))}
+        </motion.ul>
+      </motion.div>
+    );
+  };
+
   return (
     <footer ref={ref} className="bg-gray-900 text-white py-12 relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            rotate: [0, 180, 360],
-          }}
-          transition={{
-            duration: 30,
-            repeat: Infinity,
-            ease: 'linear',
-          }}
+          animate={
+            reduceMotion
+              ? { opacity: 0.4 }
+              : {
+                  scale: [1, 1.2, 1],
+                  rotate: [0, 180, 360],
+                }
+          }
+          transition={
+            reduceMotion
+              ? undefined
+              : {
+                  duration: 30,
+                  repeat: Infinity,
+                  ease: 'linear',
+                }
+          }
           className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-green-400 to-blue-400 rounded-full blur-3xl"
         />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid md:grid-cols-4 gap-8 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 mb-10">
           {/* Brand Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -105,108 +179,9 @@ export default function Footer() {
             </motion.div>
           </motion.div>
 
-          {/* Product Links */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.1 }}
-          >
-            <h4 className="font-semibold mb-4 text-white">Product</h4>
-            <ul className="space-y-2">
-              {footerLinks.product.map((link, index) => (
-                <motion.li
-                  key={index}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={isInView ? { opacity: 1, x: 0 } : {}}
-                  transition={{ duration: 0.4, delay: 0.3 + index * 0.1 }}
-                >
-                  <Link
-                    href={link.href}
-                    className="text-sm text-gray-400 hover:text-white transition-colors duration-200 flex items-center gap-1 group"
-                  >
-                    {link.name}
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      whileHover={{ scale: 1 }}
-                      className="h-0.5 w-0 bg-green-500 rounded-full transition-all duration-200"
-                    />
-                  </Link>
-                </motion.li>
-              ))}
-            </ul>
-          </motion.div>
-
-          {/* Resources Links */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <h4 className="font-semibold mb-4 text-white">Resources</h4>
-            <ul className="space-y-2">
-              {footerLinks.resources.map((link, index) => (
-                <motion.li
-                  key={index}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={isInView ? { opacity: 1, x: 0 } : {}}
-                  transition={{ duration: 0.4, delay: 0.4 + index * 0.1 }}
-                >
-                  <a
-                    href={link.href}
-                    target={link.external ? '_blank' : '_self'}
-                    rel={link.external ? 'noopener noreferrer' : ''}
-                    className="text-sm text-gray-400 hover:text-white transition-colors duration-200 flex items-center gap-1 group"
-                  >
-                    {link.name}
-                    {link.external && (
-                      <motion.div
-                        whileHover={{ scale: 1.1, rotate: 45 }}
-                        className="transition-transform duration-200"
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                      </motion.div>
-                    )}
-                  </a>
-                </motion.li>
-              ))}
-            </ul>
-          </motion.div>
-
-          {/* Community Links */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.3 }}
-          >
-            <h4 className="font-semibold mb-4 text-white">Community</h4>
-            <ul className="space-y-2">
-              {footerLinks.community.map((link, index) => (
-                <motion.li
-                  key={index}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={isInView ? { opacity: 1, x: 0 } : {}}
-                  transition={{ duration: 0.4, delay: 0.5 + index * 0.1 }}
-                >
-                  <a
-                    href={link.href}
-                    target={link.external ? '_blank' : '_self'}
-                    rel={link.external ? 'noopener noreferrer' : ''}
-                    className="text-sm text-gray-400 hover:text-white transition-colors duration-200 flex items-center gap-1 group"
-                  >
-                    {link.name}
-                    {link.external && (
-                      <motion.div
-                        whileHover={{ scale: 1.1, rotate: 45 }}
-                        className="transition-transform duration-200"
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                      </motion.div>
-                    )}
-                  </a>
-                </motion.li>
-              ))}
-            </ul>
-          </motion.div>
+          <Section title="Product" links={footerLinks.product} id="product" />
+          <Section title="Resources" links={footerLinks.resources} id="resources" />
+          <Section title="Community" links={footerLinks.community} id="community" />
         </div>
 
         {/* Bottom Section */}
@@ -214,9 +189,9 @@ export default function Footer() {
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.6 }}
-          className="border-t border-gray-800 pt-8"
+          className="border-t border-gray-800 pt-6 sm:pt-8"
         >
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
             <motion.p
               whileHover={{ scale: 1.02 }}
               className="text-center md:text-left text-sm text-gray-400"
