@@ -27,6 +27,9 @@ def chat(request):
     user = request.user if request.user.is_authenticated else None
     user_message = request.data.get('message', '').strip()
     session_id = request.data.get('session_id')
+
+    wallet_address = request.headers.get('X-Wallet-Address', '').strip()
+
     
     if not user_message:
         return Response(
