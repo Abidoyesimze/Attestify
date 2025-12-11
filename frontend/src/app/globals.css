@@ -6,6 +6,9 @@
     --foreground: #171717;
     --primary: 142 71% 45%;
     --border: 214.3 31.8% 91.4%;
+    --section-pad-y: 3.5rem;
+    --section-pad-y-sm: 4.5rem;
+    --section-pad-y-lg: 6rem;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -38,6 +41,32 @@
 /* Smooth animations */
 * {
   @apply transition-colors duration-200;
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* Section spacing helpers */
+.section {
+  padding-top: var(--section-pad-y);
+  padding-bottom: var(--section-pad-y);
+}
+
+@media (min-width: 640px) {
+  .section {
+    padding-top: var(--section-pad-y-sm);
+    padding-bottom: var(--section-pad-y-sm);
+  }
+}
+
+@media (min-width: 1024px) {
+  .section {
+    padding-top: var(--section-pad-y-lg);
+    padding-bottom: var(--section-pad-y-lg);
+  }
 }
 
 /* Custom scrollbar */
