@@ -1009,7 +1009,7 @@ export default function AIChatSidebar({
 
       {/* Input Area */}
       <div className="p-3 md:p-4 border-t border-gray-200 bg-white">
-        <form onSubmit={handleSubmit} className="flex gap-2 mb-2 md:mb-3">
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 sm:gap-2.5 mb-2 md:mb-3">
           <input
             ref={inputRef}
             type="text"
@@ -1024,7 +1024,7 @@ export default function AIChatSidebar({
           <button
             type="submit"
             disabled={isLoading || !input.trim()}
-            className="px-3 md:px-4 py-2 md:py-2.5 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg font-medium hover:from-green-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center touch-manipulation min-w-[44px] min-h-[44px] justify-center"
+            className="px-3 md:px-4 py-2 md:py-2.5 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg font-medium hover:from-green-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center touch-manipulation min-w-[44px] min-h-[44px] justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 w-full sm:w-auto"
             aria-label="Send message"
           >
             {isLoading ? (
