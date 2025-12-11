@@ -383,42 +383,42 @@ export default function AIChat({
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => handleQuickAction('What\'s my current balance?')}
-              className="px-4 py-2 bg-white border border-gray-200 text-gray-900 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-green-300 transition-all"
+              className="px-4 py-2 bg-white border border-gray-200 text-gray-900 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-green-300 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
             >
               <DollarSign className="h-4 w-4 inline mr-1" />
               Balance
             </button>
             <button
               onClick={() => handleQuickAction('How is my performance?')}
-              className="px-4 py-2 bg-white border border-gray-200 text-gray-900 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-blue-300 transition-all"
+              className="px-4 py-2 bg-white border border-gray-200 text-gray-900 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-blue-300 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
             >
               <TrendingUp className="h-4 w-4 inline mr-1" />
               Performance
             </button>
             <button
               onClick={() => handleQuickAction('Should I change my strategy?')}
-              className="px-4 py-2 bg-white border border-gray-200 text-gray-900 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-purple-300 transition-all"
+              className="px-4 py-2 bg-white border border-gray-200 text-gray-900 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-purple-300 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
             >
               <Target className="h-4 w-4 inline mr-1" />
               Strategy
             </button>
             <button
               onClick={() => handleQuickAction('What are the risks?')}
-              className="px-4 py-2 bg-white border border-gray-200 text-gray-900 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-orange-300 transition-all"
+              className="px-4 py-2 bg-white border border-gray-200 text-gray-900 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-orange-300 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
             >
               <AlertCircle className="h-4 w-4 inline mr-1" />
               Risks
             </button>
             <button
               onClick={() => handleQuickAction('How can I withdraw?')}
-              className="px-4 py-2 bg-white border border-gray-200 text-gray-900 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-red-300 transition-all"
+              className="px-4 py-2 bg-white border border-gray-200 text-gray-900 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-red-300 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
             >
               <ArrowDownLeft className="h-4 w-4 inline mr-1" />
               Withdraw
             </button>
             <button
               onClick={() => handleQuickAction('How can I deposit?')}
-              className="px-4 py-2 bg-white border border-gray-200 text-gray-900 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-green-300 transition-all"
+              className="px-4 py-2 bg-white border border-gray-200 text-gray-900 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-green-300 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
             >
               <ArrowUpRight className="h-4 w-4 inline mr-1" />
               Deposit
