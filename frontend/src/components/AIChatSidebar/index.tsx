@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useReducedMotion } from 'framer-motion';
 import { Bot, Send, Loader2, TrendingUp, Target, DollarSign, Minimize2, Copy, Check, RefreshCw, X, Clock, Edit2, Trash2, Sparkles, Search, Download, ThumbsUp, ThumbsDown, Share2 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -92,6 +93,7 @@ export default function AIChatSidebar({
   const inputRef = useRef<HTMLInputElement>(null);
   const editInputRef = useRef<HTMLTextAreaElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const reduceMotion = useReducedMotion();
 
   // Save messages to localStorage whenever they change
   useEffect(() => {
@@ -994,9 +996,9 @@ export default function AIChatSidebar({
             <div className="bg-gray-100 rounded-lg p-3">
               <div className="flex items-center gap-2">
                 <div className="flex gap-1">
-                  <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className={`h-2 w-2 bg-gray-400 rounded-full ${reduceMotion ? '' : 'animate-bounce'}`} style={{ animationDelay: '0ms' }} />
+                  <div className={`h-2 w-2 bg-gray-400 rounded-full ${reduceMotion ? '' : 'animate-bounce'}`} style={{ animationDelay: '150ms' }} />
+                  <div className={`h-2 w-2 bg-gray-400 rounded-full ${reduceMotion ? '' : 'animate-bounce'}`} style={{ animationDelay: '300ms' }} />
                 </div>
                 <span className="text-sm text-gray-600">AI is typing...</span>
               </div>
