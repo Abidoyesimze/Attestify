@@ -800,7 +800,7 @@ export default function AIChatSidebar({
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-3.5 text-[12px] leading-snug" role="log" aria-live="polite" aria-label="Chat messages">
+      <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-3.5 text-[13px] md:text-sm leading-relaxed" role="log" aria-live="polite" aria-label="Chat messages">
         {filteredMessages.length === 0 && searchQuery ? (
           <div className="text-center py-8 text-gray-500">
             <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -830,7 +830,7 @@ export default function AIChatSidebar({
               )}
               <div className={`flex flex-col max-w-[78%] md:max-w-[68%] ${isUser ? 'items-end' : 'items-start'}`}>
                 <div
-                  className={`rounded-lg px-3 py-2 relative text-[12px] leading-snug break-words overflow-hidden ${
+                  className={`rounded-lg px-3 py-2 relative text-[13px] md:text-sm leading-relaxed break-words overflow-hidden ${
                     isUser
                       ? 'bg-green-600 text-white'
                       : isError

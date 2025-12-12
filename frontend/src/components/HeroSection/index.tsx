@@ -140,12 +140,12 @@ export default function HeroSection() {
             transition={{ duration: 0.6, delay: 0.7 }}
             className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center mb-10 sm:mb-12"
           >
-            <motion.button
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-              className="group px-6 sm:px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 w-full sm:w-auto"
-            >
-              <Link href="/dashboard" className="flex items-center gap-2">
+            <Link href="/dashboard">
+              <motion.button
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                className="group px-6 sm:px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 w-full sm:w-auto"
+              >
                 <span>Launch App</span>
                 <motion.div
                   animate={{ x: [0, 5, 0] }}
@@ -153,8 +153,8 @@ export default function HeroSection() {
                 >
                   <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </motion.div>
-              </Link>
-            </motion.button>
+              </motion.button>
+            </Link>
             
             <motion.a
               whileHover={{ scale: 1.05, y: -2 }}
