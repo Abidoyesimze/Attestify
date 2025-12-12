@@ -518,10 +518,10 @@ export default function AIChatSidebar({
       // Links [text](url)
       processed = processed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">$1</a>');
       
-      // Headers
-      processed = processed.replace(/^### (.+)$/gm, '<h3 class="font-bold text-base mt-4 mb-2">$1</h3>');
-      processed = processed.replace(/^## (.+)$/gm, '<h2 class="font-bold text-lg mt-4 mb-2">$1</h2>');
-      processed = processed.replace(/^# (.+)$/gm, '<h1 class="font-bold text-xl mt-4 mb-2">$1</h1>');
+      // Headers - reduced sizes to match dashboard
+      processed = processed.replace(/^### (.+)$/gm, '<h3 class="font-bold text-xs mt-2 mb-1">$1</h3>');
+      processed = processed.replace(/^## (.+)$/gm, '<h2 class="font-bold text-sm mt-2 mb-1">$1</h2>');
+      processed = processed.replace(/^# (.+)$/gm, '<h1 class="font-bold text-sm mt-2 mb-1">$1</h1>');
       
       // Lists
       processed = processed.replace(/^\- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>');
