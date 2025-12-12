@@ -1026,7 +1026,7 @@ export default function AIChatSidebar({
           <button
             type="submit"
             disabled={isLoading || !input.trim()}
-            className="px-3 md:px-4 py-2 md:py-2.5 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg font-medium hover:from-green-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center touch-manipulation min-w-[44px] min-h-[44px] justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 w-full sm:w-auto"
+            className="px-2.5 py-1.5 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg text-xs font-medium hover:from-green-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center touch-manipulation min-w-[36px] min-h-[36px] justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 w-full sm:w-auto"
             aria-label="Send message"
           >
             {isLoading ? (
