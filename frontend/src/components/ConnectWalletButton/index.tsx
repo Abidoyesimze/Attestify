@@ -8,6 +8,7 @@ import { formatAddress } from '@/utils/format';
 export default function ConnectWalletButton() {
   const { open } = useAppKit();
   const { address, isConnected } = useAppKitAccount();
+  
   const [showMenu, setShowMenu] = useState(false);
   const [copied, setCopied] = useState(false);
 

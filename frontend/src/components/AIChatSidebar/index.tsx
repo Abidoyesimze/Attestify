@@ -518,10 +518,10 @@ export default function AIChatSidebar({
       // Links [text](url)
       processed = processed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">$1</a>');
       
-      // Headers
-      processed = processed.replace(/^### (.+)$/gm, '<h3 class="font-bold text-base mt-4 mb-2">$1</h3>');
-      processed = processed.replace(/^## (.+)$/gm, '<h2 class="font-bold text-lg mt-4 mb-2">$1</h2>');
-      processed = processed.replace(/^# (.+)$/gm, '<h1 class="font-bold text-xl mt-4 mb-2">$1</h1>');
+      // Headers - reduced sizes to match dashboard (all use text-xs for consistency)
+      processed = processed.replace(/^### (.+)$/gm, '<h3 class="font-bold text-xs mt-2 mb-1">$1</h3>');
+      processed = processed.replace(/^## (.+)$/gm, '<h2 class="font-bold text-xs mt-2 mb-1">$1</h2>');
+      processed = processed.replace(/^# (.+)$/gm, '<h1 class="font-bold text-xs mt-2 mb-1">$1</h1>');
       
       // Lists
       processed = processed.replace(/^\- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>');
@@ -701,7 +701,7 @@ export default function AIChatSidebar({
             <Bot className="h-5 w-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 truncate">AI Assistant</h3>
+            <h3 className="text-xs font-medium text-gray-900 truncate">AI Assistant</h3>
             <div className="flex items-center gap-2 flex-wrap">
               <p className="text-xs text-gray-600">Ask me anything</p>
               <div className="flex items-center gap-1">
@@ -779,7 +779,7 @@ export default function AIChatSidebar({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search messages..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+              className="w-full pl-10 pr-4 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-xs"
               autoFocus
             />
             {searchQuery && (
@@ -800,7 +800,7 @@ export default function AIChatSidebar({
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-3.5 text-[12px] leading-snug" role="log" aria-live="polite" aria-label="Chat messages">
+      <div className="flex-1 overflow-y-auto p-2 md:p-3 space-y-2 md:space-y-2.5 text-xs leading-normal" role="log" aria-live="polite" aria-label="Chat messages">
         {filteredMessages.length === 0 && searchQuery ? (
           <div className="text-center py-8 text-gray-500">
             <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -830,7 +830,7 @@ export default function AIChatSidebar({
               )}
               <div className={`flex flex-col max-w-[78%] md:max-w-[68%] ${isUser ? 'items-end' : 'items-start'}`}>
                 <div
-                  className={`rounded-lg px-3 py-2 relative text-[12px] leading-snug break-words overflow-hidden ${
+                  className={`rounded-lg px-2.5 py-1.5 relative text-xs leading-normal break-words overflow-hidden ${
                     isUser
                       ? 'bg-green-600 text-white'
                       : isError
@@ -844,7 +844,7 @@ export default function AIChatSidebar({
                         ref={editInputRef}
                         value={editContent}
                         onChange={(e) => setEditContent(e.target.value)}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-green-500"
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-xs text-gray-900 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-green-500"
                         rows={3}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
@@ -871,7 +871,7 @@ export default function AIChatSidebar({
                       </div>
                     </div>
                   ) : message.content ? (
-                    <div className="text-sm leading-relaxed break-words">
+                    <div className="text-xs leading-normal break-words">
                       {searchQuery ? (
                         <p className="whitespace-pre-wrap">{highlightSearch(message.content, searchQuery)}</p>
                       ) : (
@@ -885,7 +885,7 @@ export default function AIChatSidebar({
                         <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                         <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                       </div>
-                      <span className="text-sm">Thinking...</span>
+                      <span className="text-xs">Thinking...</span>
                     </div>
                   )}
                   
@@ -1000,7 +1000,7 @@ export default function AIChatSidebar({
                   <div className={`h-2 w-2 bg-gray-400 rounded-full ${reduceMotion ? '' : 'animate-bounce'}`} style={{ animationDelay: '150ms' }} />
                   <div className={`h-2 w-2 bg-gray-400 rounded-full ${reduceMotion ? '' : 'animate-bounce'}`} style={{ animationDelay: '300ms' }} />
                 </div>
-                <span className="text-sm text-gray-600">AI is typing...</span>
+                <span className="text-xs text-gray-600">AI is typing...</span>
               </div>
             </div>
           </div>
@@ -1019,14 +1019,14 @@ export default function AIChatSidebar({
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask me anything..."
             disabled={isLoading}
-            className="flex-1 px-3 py-2 md:py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm text-gray-900 placeholder-gray-500 disabled:bg-gray-100 disabled:cursor-not-allowed touch-manipulation"
+            className="flex-1 px-2.5 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-xs text-gray-900 placeholder-gray-500 disabled:bg-gray-100 disabled:cursor-not-allowed touch-manipulation"
             aria-label="Chat input"
             aria-describedby="input-help"
           />
           <button
             type="submit"
             disabled={isLoading || !input.trim()}
-            className="px-3 md:px-4 py-2 md:py-2.5 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg font-medium hover:from-green-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center touch-manipulation min-w-[44px] min-h-[44px] justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 w-full sm:w-auto"
+            className="px-2.5 py-1.5 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg text-xs font-medium hover:from-green-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center touch-manipulation min-w-[36px] min-h-[36px] justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 w-full sm:w-auto"
             aria-label="Send message"
           >
             {isLoading ? (
