@@ -871,7 +871,7 @@ export default function AIChatSidebar({
                       </div>
                     </div>
                   ) : message.content ? (
-                    <div className="text-sm leading-relaxed break-words">
+                    <div className="text-xs leading-normal break-words">
                       {searchQuery ? (
                         <p className="whitespace-pre-wrap">{highlightSearch(message.content, searchQuery)}</p>
                       ) : (
