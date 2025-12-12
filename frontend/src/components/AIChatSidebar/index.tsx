@@ -885,7 +885,7 @@ export default function AIChatSidebar({
                         <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                         <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                       </div>
-                      <span className="text-sm">Thinking...</span>
+                      <span className="text-xs">Thinking...</span>
                     </div>
                   )}
                   
@@ -1000,7 +1000,7 @@ export default function AIChatSidebar({
                   <div className={`h-2 w-2 bg-gray-400 rounded-full ${reduceMotion ? '' : 'animate-bounce'}`} style={{ animationDelay: '150ms' }} />
                   <div className={`h-2 w-2 bg-gray-400 rounded-full ${reduceMotion ? '' : 'animate-bounce'}`} style={{ animationDelay: '300ms' }} />
                 </div>
-                <span className="text-sm text-gray-600">AI is typing...</span>
+                <span className="text-xs text-gray-600">AI is typing...</span>
               </div>
             </div>
           </div>
