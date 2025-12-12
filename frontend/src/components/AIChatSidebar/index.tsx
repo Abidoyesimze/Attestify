@@ -800,7 +800,7 @@ export default function AIChatSidebar({
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-3.5 text-[13px] md:text-sm leading-relaxed" role="log" aria-live="polite" aria-label="Chat messages">
+      <div className="flex-1 overflow-y-auto p-2 md:p-3 space-y-2 md:space-y-2.5 text-xs leading-normal" role="log" aria-live="polite" aria-label="Chat messages">
         {filteredMessages.length === 0 && searchQuery ? (
           <div className="text-center py-8 text-gray-500">
             <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
