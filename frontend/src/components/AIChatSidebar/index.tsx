@@ -162,10 +162,21 @@ export default function AIChatSidebar({
   const callBackendAPI = async (
     message: string, 
     retryCount = 0,
-    maxRetries = 2
+    maxRetries = 2,
+    clearSession = false
   ): Promise<{ message: string; session_id?: string }> => {
     try {
       setConnectionStatus('checking');
+      
+      // Clear session if requested (e.g., after 404)
+      const currentSessionId = clearSession ? null : sessionId;
+      if (clearSession && sessionId) {
+        setSessionId(null);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('ai_chat_session_id');
+        }
+      }
+      
       const response = await fetch(API_ENDPOINTS.ai.chat, {
         method: 'POST',
         headers: {
@@ -173,7 +184,7 @@ export default function AIChatSidebar({
         },
         body: JSON.stringify({
           message,
-          session_id: sessionId || undefined,
+          session_id: currentSessionId || undefined,
         }),
       });
 
@@ -190,10 +201,16 @@ export default function AIChatSidebar({
         
         const errorMessage = errorJson?.error || errorJson?.detail || errorText || 'Unknown error';
         
+        // Handle 404 - Session not found: clear session and retry without it
+        if (response.status === 404 && errorMessage.includes('Session not found') && !clearSession) {
+          // Clear invalid session and retry
+          return callBackendAPI(message, retryCount, maxRetries, true);
+        }
+        
         // Retry on 5xx errors
         if (response.status >= 500 && retryCount < maxRetries) {
           await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
-          return callBackendAPI(message, retryCount + 1, maxRetries);
+          return callBackendAPI(message, retryCount + 1, maxRetries, clearSession);
         }
         
         throw new Error(`Backend API error (${response.status}): ${errorMessage}`);
