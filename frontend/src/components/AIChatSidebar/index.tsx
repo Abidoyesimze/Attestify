@@ -701,7 +701,7 @@ export default function AIChatSidebar({
             <Bot className="h-5 w-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 truncate">AI Assistant</h3>
+            <h3 className="text-xs font-medium text-gray-900 truncate">AI Assistant</h3>
             <div className="flex items-center gap-2 flex-wrap">
               <p className="text-xs text-gray-600">Ask me anything</p>
               <div className="flex items-center gap-1">
