@@ -830,7 +830,7 @@ export default function AIChatSidebar({
               )}
               <div className={`flex flex-col max-w-[78%] md:max-w-[68%] ${isUser ? 'items-end' : 'items-start'}`}>
                 <div
-                  className={`rounded-lg px-3 py-2 relative text-[13px] md:text-sm leading-relaxed break-words overflow-hidden ${
+                  className={`rounded-lg px-2.5 py-1.5 relative text-xs leading-normal break-words overflow-hidden ${
                     isUser
                       ? 'bg-green-600 text-white'
                       : isError
