@@ -1,36 +1,16 @@
 'use client';
 
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react';
-import { useAccount } from 'wagmi';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Wallet, ChevronDown, Copy, Check } from 'lucide-react';
 import { formatAddress } from '@/utils/format';
 
 export default function ConnectWalletButton() {
   const { open } = useAppKit();
-  const appKitAccount = useAppKitAccount();
-  const wagmiAccount = useAccount();
-  
-  // Use AppKit account first, fallback to Wagmi account for better reactivity
-  const address = appKitAccount.address || wagmiAccount.address;
-  const isConnected = appKitAccount.isConnected || wagmiAccount.isConnected;
+  const { address, isConnected } = useAppKitAccount();
   
   const [showMenu, setShowMenu] = useState(false);
   const [copied, setCopied] = useState(false);
-  
-  // Debug: Log connection state changes (development only)
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Wallet connection state:', { 
-        address, 
-        isConnected, 
-        appKitAddress: appKitAccount.address,
-        appKitConnected: appKitAccount.isConnected,
-        wagmiAddress: wagmiAccount.address,
-        wagmiConnected: wagmiAccount.isConnected
-      });
-    }
-  }, [address, isConnected, appKitAccount.address, appKitAccount.isConnected, wagmiAccount.address, wagmiAccount.isConnected]);
 
   const handleCopyAddress = async () => {
     if (address) {
