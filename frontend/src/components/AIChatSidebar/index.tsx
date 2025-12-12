@@ -1019,7 +1019,7 @@ export default function AIChatSidebar({
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask me anything..."
             disabled={isLoading}
-            className="flex-1 px-3 py-2 md:py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm text-gray-900 placeholder-gray-500 disabled:bg-gray-100 disabled:cursor-not-allowed touch-manipulation"
+            className="flex-1 px-2.5 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-xs text-gray-900 placeholder-gray-500 disabled:bg-gray-100 disabled:cursor-not-allowed touch-manipulation"
             aria-label="Chat input"
             aria-describedby="input-help"
           />
