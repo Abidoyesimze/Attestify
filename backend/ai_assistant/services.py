@@ -1,7 +1,10 @@
 import os
+import logging
 import requests
 from typing import List, Dict, Optional
 from .context import SYSTEM_CONTEXT, DEFI_GLOSSARY, STRATEGY_COMPARISON
+
+logger = logging.getLogger(__name__)
 
 class AIAssistantService:
     """Service for interacting with Google Gemini API"""
@@ -173,6 +176,10 @@ What specific question can I help you with?"""
     ) -> Dict:
         """Get AI response for a conversation using Gemini"""
         
+        logger.info(f"Getting AI response for {len(messages)} messages")
+        if user_data:
+            logger.debug(f"User data provided: {list(user_data.keys())}")
+        
         try:
             # Build system context with user data
             system_context = self._build_context(user_data)
@@ -194,6 +201,7 @@ What specific question can I help you with?"""
             }
             
             # Make API call
+            logger.debug(f"Making API request to Gemini: {self.model}")
             response = requests.post(
                 url,
                 json=payload,
@@ -201,12 +209,15 @@ What specific question can I help you with?"""
                 timeout=30
             )
             
+            logger.info(f"API response status: {response.status_code}")
+            
             if response.status_code == 200:
                 data = response.json()
                 
                 # Extract response from Gemini format
                 if 'candidates' in data and len(data['candidates']) > 0:
                     assistant_message = data['candidates'][0]['content']['parts'][0]['text']
+                    logger.info("Successfully received API response from Gemini")
                     
                     return {
                         'success': True,
@@ -216,6 +227,7 @@ What specific question can I help you with?"""
                     }
                 else:
                     # No valid response - use fallback
+                    logger.warning("No candidates in API response, using fallback")
                     user_message = messages[-1]['content'] if messages else ""
                     fallback = self._create_fallback_response(user_message)
                     
@@ -227,6 +239,7 @@ What specific question can I help you with?"""
                     }
             else:
                 # API error - use fallback
+                logger.error(f"API error: {response.status_code} - {response.text[:200]}")
                 user_message = messages[-1]['content'] if messages else ""
                 fallback = self._create_fallback_response(user_message)
                 
@@ -237,8 +250,19 @@ What specific question can I help you with?"""
                     'error': f"API returned {response.status_code}: {response.text}"
                 }
                 
+        except requests.exceptions.Timeout:
+            logger.error("API request timeout")
+            user_message = messages[-1]['content'] if messages else ""
+            fallback = self._create_fallback_response(user_message)
+            return {
+                'success': True,
+                'message': fallback,
+                'source': 'fallback',
+                'error': 'Request timeout'
+            }
         except Exception as e:
             # Any error - use fallback
+            logger.exception(f"Unexpected error in get_response: {str(e)}")
             user_message = messages[-1]['content'] if messages else ""
             fallback = self._create_fallback_response(user_message)
             

@@ -1,3 +1,5 @@
+import logging
+import uuid
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -6,8 +8,8 @@ from django.shortcuts import get_object_or_404
 from .models import Conversation, ConversationSession
 from .services import AIAssistantService
 from .serializers import MessageSerializer, ConversationSerializer
-import uuid
 
+logger = logging.getLogger(__name__)
 ai_service = AIAssistantService()
 
 
@@ -27,11 +29,12 @@ def chat(request):
     user = request.user if request.user.is_authenticated else None
     user_message = request.data.get('message', '').strip()
     session_id = request.data.get('session_id')
-
     wallet_address = request.headers.get('X-Wallet-Address', '').strip()
 
+    logger.info(f"Chat request from user={user}, session_id={session_id}, wallet={wallet_address[:10] if wallet_address else 'None'}")
     
     if not user_message:
+        logger.warning("Empty message received")
         return Response(
             {'error': 'Message cannot be empty'},
             status=status.HTTP_400_BAD_REQUEST
@@ -53,11 +56,13 @@ def chat(request):
                     user_context__wallet_address=wallet_address
                 ).first()
                 if not session:
+                    logger.warning(f"Session not found: {session_id}")
                     return Response(
                         {'error': 'Session not found'},
                         status=status.HTTP_404_NOT_FOUND
                     )
-        except:
+        except Exception as e:
+            logger.error(f"Error finding session {session_id}: {str(e)}")
             return Response(
                 {'error': 'Session not found'},
                 status=status.HTTP_404_NOT_FOUND
@@ -117,7 +122,9 @@ def chat(request):
                 user_data['current_strategy'] = latest_deposit.strategy.name
     
     # Get AI response
+    logger.debug(f"Getting AI response for session {session_id}")
     ai_response = ai_service.get_response(messages_for_api, user_data)
+    logger.info(f"AI response source: {ai_response.get('source', 'unknown')}")
     
     # Save assistant message
     assistant_message = Conversation.objects.create(
