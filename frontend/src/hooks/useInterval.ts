@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
  * Hook to run a function at intervals
  */
 export function useInterval(callback: () => void, delay: number | null): void {
-  const savedCallback = useRef<() => void>();
+  const savedCallback = useRef<() => void>(() => {});
 
   useEffect(() => {
     savedCallback.current = callback;
