@@ -4,7 +4,6 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import { useRef, useState } from 'react';
 import { Shield, Github, Twitter, MessageCircle, ExternalLink } from 'lucide-react';
-import Link from 'next/link';
 
 export default function Footer() {
   const ref = useRef(null);
