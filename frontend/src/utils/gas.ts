@@ -28,7 +28,7 @@ export function estimateDepositGas(amount: bigint): bigint {
 /**
  * Estimate gas for withdraw transaction
  */
-export function estimateWithdrawGas(amount: bigint): bigint {
+export function estimateWithdrawGas(): bigint {
   return GAS_LIMITS.WITHDRAW;
 }
 

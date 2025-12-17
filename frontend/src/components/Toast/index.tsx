@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { X, CheckCircle2, AlertCircle, Info, AlertTriangle } from 'lucide-react';
-import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '@/constants';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 

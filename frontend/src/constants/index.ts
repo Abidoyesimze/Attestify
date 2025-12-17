@@ -13,10 +13,10 @@ export const TRANSACTION_LIMITS = {
 
 // Gas limits
 export const GAS_LIMITS = {
-  DEPOSIT: 500000n,
-  WITHDRAW: 300000n,
-  APPROVAL: 100000n,
-  STRATEGY_CHANGE: 200000n,
+  DEPOSIT: BigInt(500000),
+  WITHDRAW: BigInt(300000),
+  APPROVAL: BigInt(100000),
+  STRATEGY_CHANGE: BigInt(200000),
 } as const;
 
 // Time intervals (in milliseconds)

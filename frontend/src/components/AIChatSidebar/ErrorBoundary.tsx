@@ -35,20 +35,19 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error('AI Chat Error Boundary caught an error:', error, errorInfo);
     
     // Log to error reporting service if available
-    if (typeof window !== 'undefined' && window.navigator?.sendBeacon) {
+    if (typeof window !== 'undefined' && typeof window.navigator?.sendBeacon === 'function') {
       try {
-        const errorData = {
-          message: error.message,
-          stack: error.stack,
-          componentStack: errorInfo.componentStack,
-          timestamp: new Date().toISOString(),
-          userAgent: navigator.userAgent,
-          url: window.location.href,
-        };
-        
         // Could send to error tracking service
+        // const errorData = {
+        //   message: error.message,
+        //   stack: error.stack,
+        //   componentStack: errorInfo.componentStack,
+        //   timestamp: new Date().toISOString(),
+        //   userAgent: navigator.userAgent,
+        //   url: window.location.href,
+        // };
         // window.navigator.sendBeacon('/api/errors', JSON.stringify(errorData));
-      } catch (e) {
+      } catch {
         // Silently fail if error reporting fails
       }
     }

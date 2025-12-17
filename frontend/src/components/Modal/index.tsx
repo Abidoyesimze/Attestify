@@ -34,7 +34,7 @@ export function Modal({
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
-  useClickOutside(modalRef, (e) => {
+  useClickOutside(modalRef, () => {
     if (closeOnOutsideClick && isOpen) {
       onClose();
     }
