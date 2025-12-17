@@ -1,34 +1,91 @@
 'use client';
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw, Copy, Check } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
 interface State {
   hasError: boolean;
   error: Error | null;
+  errorInfo: ErrorInfo | null;
+  copied: boolean;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { 
+      hasError: false, 
+      error: null,
+      errorInfo: null,
+      copied: false,
+    };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('AI Chat Error Boundary caught an error:', error, errorInfo);
+    
+    // Log to error reporting service if available
+    if (typeof window !== 'undefined' && window.navigator?.sendBeacon) {
+      try {
+        const errorData = {
+          message: error.message,
+          stack: error.stack,
+          componentStack: errorInfo.componentStack,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          url: window.location.href,
+        };
+        
+        // Could send to error tracking service
+        // window.navigator.sendBeacon('/api/errors', JSON.stringify(errorData));
+      } catch (e) {
+        // Silently fail if error reporting fails
+      }
+    }
+
+    this.setState({ errorInfo });
+    
+    // Call optional error handler
+    if (this.props.onError) {
+      this.props.onError(error, errorInfo);
+    }
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: null });
+    this.setState({ 
+      hasError: false, 
+      error: null,
+      errorInfo: null,
+      copied: false,
+    });
+  };
+
+  handleCopyError = async () => {
+    if (!this.state.error) return;
+    
+    const errorText = `
+Error: ${this.state.error.message}
+Stack: ${this.state.error.stack}
+Component Stack: ${this.state.errorInfo?.componentStack || 'N/A'}
+    `.trim();
+
+    try {
+      await navigator.clipboard.writeText(errorText);
+      this.setState({ copied: true });
+      setTimeout(() => this.setState({ copied: false }), 2000);
+    } catch (e) {
+      console.error('Failed to copy error:', e);
+    }
   };
 
   render() {
@@ -51,22 +108,44 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
             
             {this.state.error && (
-              <div className="mb-4 p-3 bg-gray-50 rounded text-xs font-mono text-gray-700 overflow-auto max-h-32">
-                {this.state.error.message}
+              <div className="mb-4">
+                <div className="p-3 bg-gray-50 rounded text-xs font-mono text-gray-700 overflow-auto max-h-32 mb-2">
+                  <div className="font-semibold mb-1">Error Message:</div>
+                  {this.state.error.message}
+                </div>
+                <button
+                  onClick={this.handleCopyError}
+                  className="text-xs text-gray-600 hover:text-gray-900 flex items-center gap-1"
+                  aria-label="Copy error details"
+                >
+                  {this.state.copied ? (
+                    <>
+                      <Check className="h-3 w-3" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3 w-3" />
+                      Copy Error Details
+                    </>
+                  )}
+                </button>
               </div>
             )}
 
             <div className="flex gap-2">
               <button
                 onClick={this.handleReset}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                aria-label="Try again"
               >
                 <RefreshCw className="h-4 w-4" />
                 Try Again
               </button>
               <button
                 onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                aria-label="Reload page"
               >
                 Reload Page
               </button>
