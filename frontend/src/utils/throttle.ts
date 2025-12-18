@@ -8,15 +8,13 @@ export function throttle<T extends (...args: unknown[]) => void>(
   limit: number
 ): (...args: Parameters<T>) => void {
   let inThrottle: boolean;
-  let lastResult: ReturnType<T>;
 
   return function (this: unknown, ...args: Parameters<T>) {
     if (!inThrottle) {
-      lastResult = func.apply(this, args);
+      func.apply(this, args);
       inThrottle = true;
       setTimeout(() => (inThrottle = false), limit);
     }
-    return lastResult;
   };
 }
 
