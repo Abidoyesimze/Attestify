@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import { throttle } from '@/utils/throttle';
 
 /**
@@ -8,17 +8,29 @@ export function useThrottle<T extends (...args: unknown[]) => void>(
   callback: T,
   delay: number
 ): T {
-  const throttledCallbackRef = useRef<T | null>(null);
+  const callbackRef = useRef(callback);
+  const throttledRef = useRef<ReturnType<typeof throttle<T>> | null>(null);
 
-  if (!throttledCallbackRef.current) {
-    throttledCallbackRef.current = throttle(callback, delay) as T;
-  }
+  // Update callback ref when it changes
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+
+  // Recreate throttled function when delay changes
+  useEffect(() => {
+    throttledRef.current = throttle(
+      ((...args: Parameters<T>) => {
+        callbackRef.current(...args);
+      }) as T,
+      delay
+    );
+  }, [delay]);
 
   return useCallback(
     ((...args: Parameters<T>) => {
-      throttledCallbackRef.current?.(...args);
+      throttledRef.current?.(...args);
     }) as T,
-    [delay]
+    []
   );
 }
 

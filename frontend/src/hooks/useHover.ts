@@ -4,11 +4,11 @@ import { useState, useRef, useEffect } from 'react';
  * Hook to detect if an element is being hovered
  */
 export function useHover<T extends HTMLElement = HTMLElement>(): [
-  React.RefObject<T>,
+  React.RefObject<T | null>,
   boolean
 ] {
   const [isHovered, setIsHovered] = useState(false);
-  const ref = useRef<T>(null);
+  const ref = useRef<T | null>(null);
 
   useEffect(() => {
     const element = ref.current;
