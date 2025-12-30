@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_yasg',
     'ai_assistant',
-
+    'attestify',
 ]
 
 MIDDLEWARE = [
