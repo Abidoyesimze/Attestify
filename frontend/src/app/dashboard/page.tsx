@@ -19,7 +19,8 @@ import {
   Target,
   Loader2,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Users
 } from 'lucide-react';
 import { Line, LineChart, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import Navbar from '@/components/Navbar';
@@ -27,6 +28,9 @@ import Link from 'next/link';
 import { CONTRACT_CONFIG, CUSD_CONFIG, CONTRACT_ADDRESSES } from '@/abis';
 import VerificationModal from '@/components/VerificationModal';
 import AIChatSidebar from '@/components/AIChatSidebar';
+import GoalsManager from '@/components/GoalsManager';
+import ReferralDashboard from '@/components/ReferralDashboard';
+import NotificationCenter from '@/components/NotificationCenter';
 
 
 
@@ -35,7 +39,7 @@ export default function Dashboard() {
   const { address, isConnected } = useAccount();
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [activeSection, setActiveSection] = useState<'overview' | 'strategy' | 'analytics'>('overview');
+  const [activeSection, setActiveSection] = useState<'overview' | 'strategy' | 'analytics' | 'goals' | 'referrals' | 'notifications'>('overview');
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [isVerificationComplete, setIsVerificationComplete] = useState(false);
   const [depositStep, setDepositStep] = useState<'input' | 'approving' | 'depositing' | 'success' | 'error'>('input');
@@ -648,6 +652,42 @@ export default function Dashboard() {
             >
               <BarChart3 className="h-5 w-5" />
               Analytics
+            </button>
+            
+            <button
+              onClick={() => setActiveSection('goals')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
+                activeSection === 'goals'
+                  ? 'bg-green-50 text-green-700 border border-green-200'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <Target className="h-5 w-5" />
+              Goals
+            </button>
+            
+            <button
+              onClick={() => setActiveSection('referrals')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
+                activeSection === 'referrals'
+                  ? 'bg-green-50 text-green-700 border border-green-200'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <Users className="h-5 w-5" />
+              Referrals
+            </button>
+            
+            <button
+              onClick={() => setActiveSection('notifications')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all relative ${
+                activeSection === 'notifications'
+                  ? 'bg-green-50 text-green-700 border border-green-200'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <Bell className="h-5 w-5" />
+              Notifications
             </button>
           </nav>
         </div>
@@ -1497,6 +1537,24 @@ export default function Dashboard() {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeSection === 'goals' && (
+            <div className="flex-1 p-6 overflow-y-auto">
+              <GoalsManager />
+            </div>
+          )}
+
+          {activeSection === 'referrals' && (
+            <div className="flex-1 p-6 overflow-y-auto">
+              <ReferralDashboard />
+            </div>
+          )}
+
+          {activeSection === 'notifications' && (
+            <div className="flex-1 p-6 overflow-y-auto">
+              <NotificationCenter />
             </div>
           )}
         </div>
