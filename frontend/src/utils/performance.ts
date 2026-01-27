@@ -55,17 +55,17 @@ export function lazyLoadImage(src: string): Promise<void> {
     const img = new Image();
     img.onload = () => resolve();
     img.onerror = reject;
-    img.src = src;
+      img.src = src;
   });
 }
 
 export function measurePerformance(name: string, fn: () => void) {
   if (typeof window !== 'undefined' && 'performance' in window) {
-    const start = performance.now();
+  const start = performance.now();
     fn();
     const end = performance.now();
     console.log(`${name} took ${end - start}ms`);
   } else {
     fn();
-  }
+}
 }
