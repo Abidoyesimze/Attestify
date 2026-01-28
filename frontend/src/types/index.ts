@@ -1,113 +1,115 @@
-/**
- * Shared TypeScript types and interfaces
- */
+// User Types
+export interface User {
+  id: string;
+  username: string;
+  email?: string;
+  wallet_address: string;
+  is_verified: boolean;
+  created_at: string;
+}
 
-// Transaction states
-export type TransactionStep = 
-  | 'idle'
-  | 'approving'
-  | 'pending'
-  | 'success'
-  | 'error';
+// Goal Types
+export interface SavingsGoal {
+  id: number;
+  title: string;
+  description: string;
+  category: GoalCategory;
+  target_amount: string;
+  current_amount: string;
+  target_date: string | null;
+  strategy: StrategyType;
+  status: GoalStatus;
+  progress_percentage: number;
+  days_remaining: number | null;
+  is_on_track: boolean;
+  color: string;
+  icon: string;
+  created_at: string;
+  updated_at: string;
+}
 
-// Strategy types
+export type GoalCategory =
+  | 'emergency'
+  | 'vacation'
+  | 'education'
+  | 'house'
+  | 'vehicle'
+  | 'wedding'
+  | 'retirement'
+  | 'other';
+
 export type StrategyType = 'conservative' | 'balanced' | 'growth';
-export type StrategyIndex = 0 | 1 | 2;
 
-// User verification status
-export interface VerificationStatus {
-  isVerified: boolean;
-  verifiedAt?: Date;
-  walletAddress: string;
+export type GoalStatus = 'active' | 'completed' | 'paused' | 'cancelled';
+
+// Referral Types
+export interface Referral {
+  id: number;
+  referral_code: string;
+  status: ReferralStatus;
+  first_deposit_amount: string | null;
+  referrer_reward_amount: string;
+  referee_reward_amount: string;
+  created_at: string;
+  activated_at: string | null;
 }
 
-// Vault statistics
-export interface VaultStats {
-  totalValueLocked: bigint;
-  totalShares: bigint;
-  reserveBalance: bigint;
-  deployedToAave: bigint;
-  totalDeposited: bigint;
-  totalWithdrawn: bigint;
+export type ReferralStatus = 'pending' | 'active' | 'rewarded' | 'expired';
+
+// Notification Types
+export interface Notification {
+  id: number;
+  notification_type: NotificationType;
+  title: string;
+  message: string;
+  data: Record<string, any>;
+  is_read: boolean;
+  priority: number;
+  action_url: string;
+  action_text: string;
+  created_at: string;
+  read_at: string | null;
 }
 
-// User profile data
-export interface UserProfile {
-  isVerified: boolean;
-  verifiedAt: bigint;
-  totalDeposited: bigint;
-  totalWithdrawn: bigint;
-  lastActionTime: bigint;
-}
+export type NotificationType =
+  | 'goal_milestone'
+  | 'goal_completed'
+  | 'deposit_success'
+  | 'withdrawal_success'
+  | 'yield_earned'
+  | 'referral_activated'
+  | 'referral_reward'
+  | 'system_announcement'
+  | 'strategy_change'
+  | 'security_alert';
 
-// Strategy details
-export interface StrategyDetails {
-  name: string;
-  apyRange: { min: number; max: number };
-  riskLevel: 'low' | 'medium' | 'high';
-  allocation: {
-    aave: number;
-    reserve: number;
-  };
-}
-
-// Balance history for charts
-export interface BalanceHistoryPoint {
-  date: string;
-  value: number;
+// Transaction Types
+export interface Transaction {
+  id: string;
+  type: 'deposit' | 'withdrawal';
+  amount: string;
   timestamp: number;
+  hash: string;
+  status: 'pending' | 'confirmed' | 'failed';
 }
 
-// AI Chat message
-export interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-  id?: string;
-  error?: boolean;
-  retryCount?: number;
-  isEditing?: boolean;
-}
-
-// API response types
-export interface APIResponse<T = unknown> {
-  success: boolean;
+// API Response Types
+export interface ApiResponse<T> {
   data?: T;
   error?: string;
   message?: string;
 }
 
-// Transaction error
-export interface TransactionError {
-  code?: string;
+export interface PaginatedResponse<T> {
+  results: T[];
+  count: number;
+  next: string | null;
+  previous: string | null;
+}
+
+// Error Types
+export interface ApiError {
   message: string;
-  data?: unknown;
+  code?: string;
+  details?: Record<string, any>;
 }
-
-// Form validation result
-export interface ValidationResult {
-  isValid: boolean;
-  error?: string;
-}
-
-// Wallet connection state
-export interface WalletState {
-  isConnected: boolean;
-  address?: string;
-  chainId?: number;
-  isConnecting: boolean;
-}
-
-// Loading state
-export interface LoadingState {
-  isLoading: boolean;
-  message?: string;
-}
-
-// Error state
-export interface ErrorState {
-  hasError: boolean;
-  error?: Error | string;
-  retry?: () => void;
-}
-

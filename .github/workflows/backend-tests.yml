@@ -1,0 +1,62 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [ main, develop, feature/* ]
+    paths:
+      - 'backend/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: attestify_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        cd backend
+        pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run migrations
+      run: |
+        cd backend
+        python manage.py migrate --noinput
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/attestify_test
+        SECRET_KEY: test-secret-key-for-ci
+        DEBUG: 'False'
+    
+    - name: Run tests
+      run: |
+        cd backend
+        pytest --ds=api.settings --tb=short -v || python manage.py test
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/attestify_test
+        SECRET_KEY: test-secret-key-for-ci
+        DEBUG: 'False'

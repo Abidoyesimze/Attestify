@@ -65,3 +65,5 @@ export function Avatar({ src, alt, name, size = 'md', className = '' }: AvatarPr
   );
 }
 
+
+
