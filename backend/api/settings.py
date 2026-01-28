@@ -14,6 +14,10 @@ from pathlib import Path
 import os
 from corsheaders.defaults import default_headers
 
+# Load environment variables
+from dotenv import load_dotenv
+load_dotenv()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -22,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-k^r^ovzrf2t41m%3t%cq*bl8$ib^7g!bjb6l644ej(dledb&+t'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dev-key-change-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -90,12 +94,28 @@ WSGI_APPLICATION = 'api.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+DATABASE_URL = os.environ.get('DATABASE_URL', '')
+if DATABASE_URL and DATABASE_URL.startswith('postgresql://'):
+    try:
+        import dj_database_url
+        DATABASES = {
+            'default': dj_database_url.config(default=DATABASE_URL)
+        }
+    except ImportError:
+        # Fallback to SQLite if dj-database-url not installed
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
 
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {

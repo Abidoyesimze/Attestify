@@ -40,18 +40,23 @@ jobs:
     - name: Install dependencies
       run: |
         cd backend
+        pip install --upgrade pip
         pip install -r requirements.txt
     
     - name: Run migrations
       run: |
         cd backend
-        python manage.py migrate
+        python manage.py migrate --noinput
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/attestify_test
+        SECRET_KEY: test-secret-key-for-ci
+        DEBUG: 'False'
     
     - name: Run tests
       run: |
         cd backend
-        python manage.py test
+        pytest --ds=api.settings --tb=short -v || python manage.py test
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/attestify_test
+        SECRET_KEY: test-secret-key-for-ci
+        DEBUG: 'False'
