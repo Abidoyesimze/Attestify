@@ -12,33 +12,41 @@ export function useOptimisticUpdate<T>(
   options: OptimisticUpdateOptions<T> = {}
 ) {
   const [data, setData] = useState<T>(initialData);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [previousData, setPreviousData] = useState<T | null>(null);
 
   const update = useCallback(async (optimisticData: T) => {
-    setIsLoading(true);
-    setError(null);
-    setPreviousData(data);
+    const previousData = data;
+    
+    // Optimistically update UI
     setData(optimisticData);
+    setIsUpdating(true);
+    setError(null);
 
     try {
       const result = await updateFn(optimisticData);
       setData(result);
       options.onSuccess?.(result);
+      return result;
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Update failed');
       setError(error);
       
-      if (options.rollbackOnError && previousData !== null) {
+      if (options.rollbackOnError !== false) {
         setData(previousData);
       }
       
       options.onError?.(error);
+      throw error;
     } finally {
-      setIsLoading(false);
+      setIsUpdating(false);
     }
-  }, [data, updateFn, options, previousData]);
+  }, [data, updateFn, options]);
 
-  return { data, update, isLoading, error };
+  return {
+    data,
+    update,
+    isUpdating,
+    error,
+  };
 }
