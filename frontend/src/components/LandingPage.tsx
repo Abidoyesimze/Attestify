@@ -12,11 +12,21 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50">
       <Navbar />
-      <HeroSection />
-      <StatsSection />
-      <FeaturesSection />
-      <HowItWorksSection />
-      <CTASection />
+      <div className="section" id="main">
+        <HeroSection />
+      </div>
+      <div className="section">
+        <StatsSection />
+      </div>
+      <div className="section">
+        <FeaturesSection />
+      </div>
+      <div className="section">
+        <HowItWorksSection />
+      </div>
+      <div className="section">
+        <CTASection />
+      </div>
       <Footer />
     </div>
   );

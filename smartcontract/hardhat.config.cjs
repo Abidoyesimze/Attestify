@@ -1,4 +1,5 @@
-require("@nomicfoundation/hardhat-toolbox");
+require("@nomicfoundation/hardhat-toolbox-viem");
+require("@nomicfoundation/hardhat-verify");
 require("dotenv").config();
 
 const { PRIVATE_KEY, CELOSCAN_API_KEY, CELO_MAINNET_RPC } = process.env;
@@ -16,6 +17,7 @@ module.exports = {
   },
   networks: {
     hardhat: {
+      type: "edr-simulated",
       forking: {
         url: CELO_MAINNET_RPC || "https://forno.celo.org",
         enabled: true,
@@ -31,16 +33,19 @@ module.exports = {
       url: "http://127.0.0.1:8545",
     },
     celoMainnet: {
+      type: "http",
       url: CELO_MAINNET_RPC || "https://forno.celo.org",
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
       chainId: 42220,
     },
     celoAlfajores: {
+      type: "http",
       url: "https://alfajores-forno.celo-testnet.org",
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
       chainId: 44787,
     },
     celoSepolia: {
+      type: "http",
       url: "https://forno.celo-sepolia.celo-testnet.org/",
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
       chainId: 11142220,
@@ -50,7 +55,7 @@ module.exports = {
     apiKey: {
       celo: CELOSCAN_API_KEY || "abc",
       celoAlfajores: CELOSCAN_API_KEY || "abc",
-      celoSepolia: "abc",
+      celoSepolia: CELOSCAN_API_KEY || "abc",
     },
     customChains: [
       {
@@ -73,8 +78,8 @@ module.exports = {
         network: "celoSepolia",
         chainId: 11142220,
         urls: {
-          apiURL: "https://api-sepolia-blockscout.celo-testnet.org/api",
-          browserURL: "https://celo-sepolia.blockscout.com",
+          apiURL: "https://api-sepolia.celoscan.io/api",
+          browserURL: "https://sepolia.celoscan.io",
         },
       },
     ],

@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { TrendingUp, DollarSign, Shield, Users } from 'lucide-react';
@@ -8,6 +8,7 @@ import { TrendingUp, DollarSign, Shield, Users } from 'lucide-react';
 export default function StatsSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true });
+  const reduceMotion = useReducedMotion();
 
   const stats = [
     {
@@ -93,7 +94,7 @@ export default function StatsSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-8"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-7 lg:gap-8"
         >
           {stats.map((stat, index) => {
             const colorClasses = getColorClasses(stat.color);
@@ -115,9 +116,9 @@ export default function StatsSection() {
                 className="text-center group"
               >
                 <motion.div
-                  whileHover={{ rotate: 360 }}
-                  transition={{ duration: 0.6 }}
-                  className={`inline-flex h-12 w-12 items-center justify-center rounded-xl ${colorClasses.bg} mb-4 shadow-lg group-hover:shadow-xl transition-shadow duration-300`}
+                  whileHover={reduceMotion ? undefined : { rotate: 360 }}
+                  transition={reduceMotion ? undefined : { duration: 0.6 }}
+                  className={`inline-flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-xl ${colorClasses.bg} mb-3 sm:mb-4 shadow-lg group-hover:shadow-xl transition-shadow duration-300`}
                 >
                   <stat.icon className={`h-6 w-6 ${colorClasses.icon}`} />
                 </motion.div>
@@ -130,7 +131,7 @@ export default function StatsSection() {
                     delay: stat.delay + 0.2,
                     ease: 'backOut'
                   }}
-                  className="text-4xl font-bold text-gray-900 mb-1"
+                  className="text-3xl sm:text-4xl font-bold text-gray-900 mb-0.5 sm:mb-1 leading-tight"
                 >
                   {stat.value}
                 </motion.div>
@@ -142,7 +143,7 @@ export default function StatsSection() {
                     duration: 0.4, 
                     delay: stat.delay + 0.4
                   }}
-                  className="text-sm font-semibold text-gray-900 mb-1"
+                  className="text-sm sm:text-base font-semibold text-gray-900 mb-1"
                 >
                   {stat.label}
                 </motion.div>

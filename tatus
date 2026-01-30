@@ -1,0 +1,166 @@
+[1mdiff --git a/backend/ai_assistant/views.py b/backend/ai_assistant/views.py[m
+[1mindex 2e5d0b5..001459c 100644[m
+[1m--- a/backend/ai_assistant/views.py[m
+[1m+++ b/backend/ai_assistant/views.py[m
+[36m@@ -1,6 +1,6 @@[m
+ from rest_framework import status[m
+ from rest_framework.decorators import api_view, permission_classes[m
+[31m-from rest_framework.permissions import IsAuthenticated[m
+[32m+[m[32mfrom rest_framework.permissions import IsAuthenticated, AllowAny[m
+ from rest_framework.response import Response[m
+ from django.shortcuts import get_object_or_404[m
+ from .models import Conversation, ConversationSession[m
+[36m@@ -12,18 +12,25 @@[m [mai_service = AIAssistantService()[m
+ [m
+ [m
+ @api_view(['POST'])[m
+[31m-@permission_classes([IsAuthenticated])[m
+[32m+[m[32m@permission_classes([AllowAny])  # Allow wallet-based access[m
+ def chat(request):[m
+     """[m
+     Main chat endpoint for AI assistant[m
+[32m+[m[32m    Supports both authenticated users and wallet-based access[m
+     [m
+[31m-    POST /api/ai/chat/[m
+[32m+[m[32m    POST /api/ai_assistant/chat/[m
+     {[m
+         "message": "What's the best strategy for me?",[m
+[31m-        "session_id": "optional-session-id"[m
+[32m+[m[32m        "session_id": "optional-session-id",[m
+[32m+[m[32m        "wallet_address": "optional-wallet-address" (from header X-Wallet-Address)[m
+     }[m
+     """[m
+[31m-    user = request.user[m
+[32m+[m[32m    # Get wallet address from header or request data[m
+[32m+[m[32m    wallet_address = request.headers.get('X-Wallet-Address') or request.data.get('wallet_address')[m
+[32m+[m[41m    [m
+[32m+[m[32m    # For authenticated users, use the user object[m
+[32m+[m[32m    # For wallet-based access, use wallet address as identifier[m
+[32m+[m[32m    user = request.user if request.user.is_authenticated else None[m
+     user_message = request.data.get('message', '').strip()[m
+     session_id = request.data.get('session_id')[m
+     [m
+[36m@@ -34,26 +41,47 @@[m [mdef chat(request):[m
+         )[m
+     [m
+     # Get or create conversation session[m
+[32m+[m[32m    # For wallet-based access, use wallet address in session metadata[m
+     if session_id:[m
+[31m-        session = get_object_or_404([m
+[31m-            ConversationSession, [m
+[31m-            session_id=session_id, [m
+[31m-            user=user[m
+[31m-        )[m
+[32m+[m[32m        try:[m
+[32m+[m[32m            if user:[m
+[32m+[m[32m                session = get_object_or_404([m
+[32m+[m[32m                    ConversationSession,[m[41m [m
+[32m+[m[32m                    session_id=session_id,[m[41m [m
+[32m+[m[32m                    user=user[m
+[32m+[m[32m                )[m
+[32m+[m[32m            else:[m
+[32m+[m[32m                # For wallet-based access, find session by session_id and wallet in metadata[m
+[32m+[m[32m                session = ConversationSession.objects.filter([m
+[32m+[m[32m                    session_id=session_id,[m
+[32m+[m[32m                    user__isnull=True,[m
+[32m+[m[32m                    user_context__wallet_address=wallet_address[m
+[32m+[m[32m                ).first()[m
+[32m+[m[32m                if not session:[m
+[32m+[m[32m                    return Response([m
+[32m+[m[32m                        {'error': 'Session not found'},[m
+[32m+[m[32m                        status=status.HTTP_404_NOT_FOUND[m
+[32m+[m[32m                    )[m
+[32m+[m[32m        except:[m
+[32m+[m[32m            return Response([m
+[32m+[m[32m                {'error': 'Session not found'},[m
+[32m+[m[32m                status=status.HTTP_404_NOT_FOUND[m
+[32m+[m[32m            )[m
+     else:[m
+         session_id = str(uuid.uuid4())[m
+         session = ConversationSession.objects.create([m
+[31m-            user=user,[m
+[31m-            session_id=session_id[m
+[32m+[m[32m            user=user,  # Can be None for wallet-based access[m
+[32m+[m[32m            session_id=session_id,[m
+[32m+[m[32m            user_context={'wallet_address': wallet_address} if wallet_address else {}[m
+         )[m
+     [m
+     # Save user message[m
+     Conversation.objects.create([m
+[31m-        user=user,[m
+[32m+[m[32m        user=user,  # Can be None for wallet-based access[m
+         session_id=session_id,[m
+         message=user_message,[m
+         role='user',[m
+[31m-        metadata={}[m
+[32m+[m[32m        metadata={'wallet_address': wallet_address} if wallet_address else {}[m
+     )[m
+     [m
+     # Get conversation history (last 10 messages for context)[m
+[36m@@ -70,41 +98,45 @@[m [mdef chat(request):[m
+         })[m
+     [m
+     # Get user context data[m
+[32m+[m[32m    # For wallet-based access, we'll use data from request if provided[m
+     user_data = {[m
+[31m-        'is_new_user': not hasattr(user, 'deposits') or not user.deposits.exists(),[m
+[32m+[m[32m        'is_new_user': True,  # Default for wallet-based access[m
+     }[m
+     [m
+[31m-    # Get latest balance if exists[m
+[31m-    if hasattr(user, 'balances'):[m
+[31m-        latest_balance = user.balances.first()[m
+[31m-        if latest_balance:[m
+[31m-            user_data.update({[m
+[31m-                'balance': float(latest_balance.current_balance),[m
+[31m-                'total_deposited': float(latest_balance.total_deposited),[m
+[31m-                'total_earned': float(latest_balance.total_earned),[m
+[31m-            })[m
+[31m-    [m
+[31m-    # Get current strategy from latest deposit[m
+[31m-    if hasattr(user, 'deposits'):[m
+[31m-        latest_deposit = user.deposits.filter([m
+[31m-            transaction_type='deposit',[m
+[31m-            strategy__isnull=False[m
+[31m-        ).first()[m
+[31m-        if latest_deposit:[m
+[31m-            user_data['current_strategy'] = latest_deposit.strategy.name[m
+[32m+[m[32m    # If authenticated user, get data from user model[m
+[32m+[m[32m    if user:[m
+[32m+[m[32m        user_data['is_new_user'] = not hasattr(user, 'deposits') or not user.deposits.exists()[m
+[32m+[m[41m        [m
+[32m+[m[32m        if hasattr(user, 'balances'):[m
+[32m+[m[32m            latest_balance = user.balances.first()[m
+[32m+[m[32m            if latest_balance:[m
+[32m+[m[32m                user_data.update({[m
+[32m+[m[32m                    'balance': float(latest_balance.current_balance),[m
+[32m+[m[32m                    'total_deposited': float(latest_balance.total_deposited),[m
+[32m+[m[32m                    'total_earned': float(latest_balance.total_earned),[m
+[32m+[m[32m                })[m
+[32m+[m[41m        [m
+[32m+[m[32m        if hasattr(user, 'deposits'):[m
+[32m+[m[32m            latest_deposit = user.deposits.filter([m
+[32m+[m[32m                transaction_type='deposit',[m
+[32m+[m[32m                strategy__isnull=False[m
+[32m+[m[32m            ).first()[m
+[32m+[m[32m            if latest_deposit:[m
+[32m+[m[32m                user_data['current_strategy'] = latest_deposit.strategy.name[m
+     [m
+     # Get AI response[m
+     ai_response = ai_service.get_response(messages_for_api, user_data)[m
+     [m
+     # Save assistant message[m
+     assistant_message = Conversation.objects.create([m
+[31m-        user=user,[m
+[32m+[m[32m        user=user,  # Can be None for wallet-based access[m
+         session_id=session_id,[m
+         message=ai_response['message'],[m
+         role='assistant',[m
+         metadata={[m
+             'source': ai_response.get('source', 'api'),[m
+[31m-            'error': ai_response.get('error')[m
+[32m+[m[32m            'error': ai_response.get('error'),[m
+[32m+[m[32m            'wallet_address': wallet_address[m
+         },[m
+         response_source=ai_response.get('source', 'api')[m
+     )[m
