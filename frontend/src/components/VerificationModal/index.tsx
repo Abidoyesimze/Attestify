@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, CheckCircle, AlertCircle, Loader2, X, Smartphone, Monitor } from 'lucide-react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { countries, SelfQRcodeWrapper, SelfAppBuilder, getUniversalLink } from '@selfxyz/qrcode';
-import { CONTRACT_CONFIG } from '@/abis';
+import { CONTRACT_CONFIG, CONTRACT_ADDRESSES } from '@/abis';
 
 interface VerificationModalProps {
   isOpen: boolean;
@@ -51,8 +51,17 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
     if (!isOpen || !address) return;
 
     try {
-      // Build Self App configuration - simple approach like working contract
-      // No contract endpoint - just QR code verification
+      // Deeplink callback: where Self app redirects after verification (mobile / Farcaster mini app)
+      // Use env for Farcaster frame URL, or current origin when in browser
+      const deeplinkCallback =
+        typeof window !== 'undefined'
+          ? process.env.NEXT_PUBLIC_SELF_DEEPLINK_CALLBACK ||
+            `${window.location.origin}${window.location.pathname}`
+          : '';
+
+      // Build Self App configuration (QR + deeplink for mobile/mini app)
+      // endpoint = contract address (lowercase) so Self app can submit proof on-chain
+      const vaultAddress = CONTRACT_ADDRESSES.ATTESTIFY_VAULT.toLowerCase();
       const app = new SelfAppBuilder({
         version: 2,
         appName: process.env.NEXT_PUBLIC_SELF_APP_NAME || 'Attestify',
@@ -61,6 +70,13 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
         userId: address,
         userIdType: 'hex', // EVM address type
         userDefinedData: `Attestify verification for ${address}`,
+        // Contract endpoint: Self app submits proof to vault (address must be lowercase per Self docs)
+        ...(vaultAddress && {
+          endpoint: vaultAddress,
+          endpointType: process.env.NEXT_PUBLIC_SELF_ENDPOINT_TYPE || 'staging_celo',
+        }),
+        // Mobile / Farcaster mini app: Self redirects user back here after verification
+        ...(deeplinkCallback && { deeplinkCallback }),
         disclosures: {
           // Required verifications for DeFi compliance
           minimumAge: 18,
@@ -77,7 +93,7 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
 
       setSelfApp(app);
 
-      // Generate universal link for mobile users
+      // Generate universal link for mobile users (opens Self app directly)
       const link = getUniversalLink(app);
       setUniversalLink(link);
     } catch (error: unknown) {
@@ -138,8 +154,8 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
       
     } catch (error) {
       console.error('❌ Contract verification failed:', error);
-      setError('Contract verification failed. Please try again.');
-      setStep('qr');
+      setErrorMessage('Contract verification failed. Please try again.');
+      setStep('error');
     }
   };
 
@@ -244,31 +260,33 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
                   <p className="text-xs text-gray-600 font-medium mb-2">Choose your device:</p>
                 </div>
 
-                {/* Desktop Verification */}
-                <button
-                  onClick={() => handleStartVerification('desktop')}
-                  disabled={!selfApp}
-                  className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-xl font-semibold hover:from-green-700 hover:to-blue-700 transition-all shadow-lg disabled:opacity-50 flex items-center justify-center gap-3"
-                >
-                  <Monitor className="h-5 w-5" />
-                  <div className="text-left">
-                    <div>Verify on Desktop</div>
-                    <div className="text-xs opacity-90">Scan QR code with Self app</div>
-                  </div>
-                </button>
-
-                {/* Mobile Verification */}
-                <button
-                  onClick={() => handleStartVerification('mobile')}
-                  disabled={!selfApp || !universalLink}
-                  className="w-full px-6 py-3 bg-gray-900 text-white rounded-xl font-semibold hover:bg-gray-800 transition-all shadow-lg disabled:opacity-50 flex items-center justify-center gap-3"
-                >
-                  <Smartphone className="h-5 w-5" />
-                  <div className="text-left">
-                    <div>Verify on Mobile</div>
-                    <div className="text-xs opacity-90">Open Self app directly</div>
-                  </div>
-                </button>
+                {/* Mobile-first on small screens (Farcaster mini app); desktop first on large screens */}
+                <div className="flex flex-col gap-3">
+                  {/* Desktop: first on md+, second on small screens */}
+                  <button
+                    onClick={() => handleStartVerification('desktop')}
+                    disabled={!selfApp}
+                    className="w-full px-6 py-3 bg-gray-900 text-white rounded-xl font-semibold hover:bg-gray-800 transition-all shadow-lg disabled:opacity-50 flex items-center justify-center gap-3 order-2 md:order-1"
+                  >
+                    <Monitor className="h-5 w-5" />
+                    <div className="text-left">
+                      <div>Verify on Desktop</div>
+                      <div className="text-xs opacity-90">Scan QR code with Self app</div>
+                    </div>
+                  </button>
+                  {/* Mobile: first on small screens, second on md+ */}
+                  <button
+                    onClick={() => handleStartVerification('mobile')}
+                    disabled={!selfApp || !universalLink}
+                    className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-xl font-semibold hover:from-green-700 hover:to-blue-700 transition-all shadow-lg disabled:opacity-50 flex items-center justify-center gap-3 order-1 md:order-2"
+                  >
+                    <Smartphone className="h-5 w-5" />
+                    <div className="text-left">
+                      <div>Verify on Mobile</div>
+                      <div className="text-xs opacity-90">Open Self app directly</div>
+                    </div>
+                  </button>
+                </div>
               </motion.div>
             )}
 

@@ -68,6 +68,41 @@ Self Protocol provides privacy-preserving identity verification using zero-knowl
 8. Dashboard unlocks automatically
 ```
 
+## Farcaster Mini App / Mobile Integration
+
+When verification runs inside a **Farcaster mini app** (or any in-app browser), use the **mobile-first** flow with deeplinking so users don’t have to scan a QR on the same device.
+
+### How it works
+
+1. **Deeplink**: The app builds a Self universal link with `getUniversalLink(selfApp)` and opens it when the user taps “Verify on Mobile”. The Self app opens directly (no QR scan).
+2. **Return URL**: `deeplinkCallback` is set so after verification the Self app redirects the user back to your app (e.g. your mini app URL). Self shows a short countdown and then opens the callback URL.
+3. **Contract**: The vault address is passed as `endpoint` (lowercase) with `endpointType: 'staging_celo'` so the Self app can submit the proof on-chain to `AttestifyVault`.
+
+### Configuration for mini app
+
+Set the callback URL so Self redirects back to your Farcaster frame or mini app:
+
+```bash
+# Optional: URL where Self app redirects after verification (default: current page URL)
+NEXT_PUBLIC_SELF_DEEPLINK_CALLBACK=https://your-mini-app-url.com/verify
+
+# Optional: Self endpoint type (default: staging_celo)
+NEXT_PUBLIC_SELF_ENDPOINT_TYPE=staging_celo
+```
+
+If `NEXT_PUBLIC_SELF_DEEPLINK_CALLBACK` is not set, the modal uses `window.location.origin + pathname` so users return to the same page (works for same-domain mini apps).
+
+### UI behavior
+
+- **Small screens**: “Verify on Mobile” is shown first (best for Farcaster in-app browser).
+- **Large screens**: “Verify on Desktop” is shown first (QR code flow).
+
+Reference: [Self docs – Use deeplinking](https://docs.self.xyz/use-self/use-deeplinking), [QRCode SDK – Usage (Mobile)](https://docs.self.xyz/frontend-integration/qrcode-sdk).
+
+### Native mobile app (React Native)
+
+For a **native** app (e.g. React Native) that runs passport/NFC inside the app, use the **Mobile SDK** (`@selfxyz/mobile-sdk-alpha`): `SelfClientProvider`, onboarding screens (country picker → document camera → NFC), and adapters (auth, scanner, network, crypto, documents). See [Self Mobile SDK – Getting Started](https://docs.self.xyz/mobile-sdk/getting-started) and [SelfClient Provider](https://docs.self.xyz/mobile-sdk/selfclient-provider). The web-based flow above is for **web/mini app** (QR + deeplink); the Mobile SDK is for embedding the full verification flow inside a native app.
+
 ## Key Features
 
 ### Security
@@ -97,6 +132,13 @@ Create `.env.local` file:
 NEXT_PUBLIC_SELF_APP_NAME=Attestify
 NEXT_PUBLIC_SELF_SCOPE=attestify
 
+# Optional: Where Self app redirects after verification (mobile / Farcaster mini app)
+# Default: current page URL (origin + pathname)
+# NEXT_PUBLIC_SELF_DEEPLINK_CALLBACK=https://your-mini-app.com/verify
+
+# Optional: Self endpoint type (staging_celo | production_celo). Default: staging_celo
+# NEXT_PUBLIC_SELF_ENDPOINT_TYPE=staging_celo
+
 # WalletConnect Project ID for RainbowKit
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id_here
 ```
@@ -109,12 +151,13 @@ const app = new SelfAppBuilder({
   version: 2,
   appName: process.env.NEXT_PUBLIC_SELF_APP_NAME || 'Attestify',
   scope: process.env.NEXT_PUBLIC_SELF_SCOPE || 'attestify',
-  endpoint: CONTRACT_ADDRESSES.ATTESTIFY_VAULT.toLowerCase(),
-  endpointType: 'staging_celo', // Celo Sepolia testnet
+  endpoint: CONTRACT_ADDRESSES.ATTESTIFY_VAULT.toLowerCase(), // must be lowercase
+  endpointType: process.env.NEXT_PUBLIC_SELF_ENDPOINT_TYPE || 'staging_celo',
+  deeplinkCallback: process.env.NEXT_PUBLIC_SELF_DEEPLINK_CALLBACK || window.location.origin + pathname, // mobile / mini app return
   userIdType: 'hex', // EVM address type
   disclosures: {
     minimumAge: 18,
-    excludedCountries: [countries.CUBA, countries.IRAN],
+    excludedCountries: [countries.CUBA, countries.IRAN, countries.NORTH_KOREA, countries.RUSSIA],
     nationality: true,
   },
 }).build();
