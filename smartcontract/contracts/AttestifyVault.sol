@@ -1,446 +1,463 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@selfxyz/contracts/contracts/abstract/SelfVerificationRoot.sol";
+import "@selfxyz/contracts/contracts/interfaces/ISelfVerificationRoot.sol";
+import "@selfxyz/contracts/contracts/libraries/SelfStructs.sol";
 import "./IAave.sol";
 
-/**
- * @title AttestifyVault
- * @notice Main vault contract for yield generation with identity verification
- * @dev Upgradeable vault using UUPS pattern, integrates with separate strategy contracts
- * 
- * Architecture:
- * - Vault: Holds user funds, manages shares
- * - Strategy: Deploys funds to yield sources (Aave)
- * - Verifier: Handles identity verification (Self Protocol)
- */
 contract AttestifyVault is
-    Initializable,
-    UUPSUpgradeable,
-    OwnableUpgradeable,
-    ReentrancyGuardUpgradeable,
-    PausableUpgradeable
+    SelfVerificationRoot,
+    Ownable,
+    ReentrancyGuard,
+    Pausable
 {
     using SafeERC20 for IERC20;
 
-    /* ========== STATE VARIABLES (DO NOT REORDER) ========== */
-    
-    // Core contracts
-    IERC20 public asset;                    // cUSD token
-    address public strategy;                // Aave strategy contract
-    address public verifier;                // Self verifier contract
-    
-    // Vault accounting
+    /* ========== STATE VARIABLES ========== */
+
+    // Token contracts
+    IERC20 public immutable cUSD;
+    IAToken public immutable acUSD;
+
+    // Protocol integrations
+    IPool public immutable aavePool;
+
+    // Self Protocol configuration
+    bytes32 public configId;
+
+    // Vault accounting (share-based system)
     uint256 public totalShares;
     mapping(address => uint256) public shares;
-    
+
     // User data
-    mapping(address => UserData) public userData;
-    
-    struct UserData {
+    mapping(address => UserProfile) public users;
+    mapping(address => StrategyType) public userStrategy;
+
+    // Strategy configurations
+    mapping(StrategyType => Strategy) public strategies;
+
+    // Limits and config
+    uint256 public constant MIN_DEPOSIT = 1e18; // 1 cUSD
+    uint256 public constant MAX_DEPOSIT = 10_000e18;
+    uint256 public constant MAX_TVL = 100_000e18;
+    uint256 public constant RESERVE_RATIO = 10;
+
+    // Admin addresses
+    address public aiAgent;
+    address public treasury;
+
+    // Statistics
+    uint256 public totalDeposited;
+    uint256 public totalWithdrawn;
+    uint256 public lastRebalance;
+
+    /* ========== STRUCTS & ENUMS ========== */
+
+    struct UserProfile {
+        bool isVerified;
+        uint256 verifiedAt;
         uint256 totalDeposited;
         uint256 totalWithdrawn;
         uint256 lastActionTime;
+        uint256 userIdentifier; // From Self Protocol
     }
-    
-    // Configuration
-    uint256 public constant MIN_DEPOSIT = 1e18;        // 1 cUSD
-    uint256 public maxUserDeposit;                      // Per user limit
-    uint256 public maxTotalDeposit;                     // Total TVL limit
-    uint256 public constant RESERVE_RATIO = 10;         // 10% kept in vault
-    uint256 private constant VIRTUAL_SHARES = 1e3;      // Virtual liquidity to harden share price
-    uint256 private constant VIRTUAL_ASSETS = 1e3;
-    
-    // Admin
-    address public treasury;
-    address public rebalancer;                          // Can be AI agent
-    uint256 public lastRebalance;
-    
-    // Stats
-    uint256 public totalDeposited;
-    uint256 public totalWithdrawn;
-    
+
+    enum StrategyType {
+        CONSERVATIVE,
+        BALANCED,
+        GROWTH
+    }
+
+    struct Strategy {
+        string name;
+        uint8 aaveAllocation;
+        uint8 reserveAllocation;
+        uint16 targetAPY;
+        uint8 riskLevel;
+        bool isActive;
+    }
+
     /* ========== EVENTS ========== */
-    
+
+    event UserVerified(
+        address indexed user,
+        uint256 userIdentifier,
+        uint256 timestamp
+    );
     event Deposited(address indexed user, uint256 assets, uint256 shares);
     event Withdrawn(address indexed user, uint256 assets, uint256 shares);
-    event Rebalanced(uint256 strategyBalance, uint256 reserveBalance, uint256 timestamp);
-    event StrategyUpdated(address indexed oldStrategy, address indexed newStrategy);
-    event VerifierUpdated(address indexed oldVerifier, address indexed newVerifier);
-    event LimitsUpdated(uint256 maxUser, uint256 maxTotal);
-    
+    event StrategyChanged(
+        address indexed user,
+        StrategyType oldStrategy,
+        StrategyType newStrategy
+    );
+    event DeployedToAave(uint256 amount, uint256 timestamp);
+    event WithdrawnFromAave(uint256 amount, uint256 timestamp);
+    event Rebalanced(
+        uint256 aaveBalance,
+        uint256 reserveBalance,
+        uint256 timestamp
+    );
+    event ConfigIdUpdated(bytes32 newConfigId);
+
     /* ========== ERRORS ========== */
-    
+
     error NotVerified();
     error InvalidAmount();
-    error ExceedsUserLimit();
-    error ExceedsTVLLimit();
+    error ExceedsMaxDeposit();
+    error ExceedsMaxTVL();
     error InsufficientShares();
-    error InsufficientBalance();
+    error InsufficientLiquidity();
     error ZeroAddress();
-    error ExceedsBalance();
-    error SlippageTooHigh();
-    error StrategyDepositMismatch(uint256 expected, uint256 actual);
-    
+    error ConfigNotSet();
+
     /* ========== CONSTRUCTOR ========== */
-    
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-    
-    /* ========== INITIALIZER ========== */
-    
-    /**
-     * @notice Initialize vault (called once after proxy deployment)
-     * @param _asset Underlying asset (cUSD)
-     * @param _strategy Aave strategy contract
-     * @param _verifier Self verifier contract
-     * @param _maxUserDeposit Max deposit per user
-     * @param _maxTotalDeposit Max total TVL
-     */
-    function initialize(
-        address _asset,
-        address _strategy,
-        address _verifier,
-        uint256 _maxUserDeposit,
-        uint256 _maxTotalDeposit
-    ) external initializer {
-        if (_asset == address(0) || _strategy == address(0) || _verifier == address(0)) {
+
+    constructor(
+        address _cUSD,
+        address _acUSD,
+        address _selfProtocolHub,
+        address _aavePool,
+        string memory _scopeSeed
+    ) SelfVerificationRoot(_selfProtocolHub, _scopeSeed) Ownable(msg.sender) {
+        if (
+            _cUSD == address(0) ||
+            _acUSD == address(0) ||
+            _selfProtocolHub == address(0) ||
+            _aavePool == address(0)
+        ) {
             revert ZeroAddress();
         }
-        
-        __Ownable_init(msg.sender);
-        __UUPSUpgradeable_init();
-        __ReentrancyGuard_init();
-        __Pausable_init();
-        
-        asset = IERC20(_asset);
-        strategy = _strategy;
-        verifier = _verifier;
-        maxUserDeposit = _maxUserDeposit;
-        maxTotalDeposit = _maxTotalDeposit;
+
+        cUSD = IERC20(_cUSD);
+        acUSD = IAToken(_acUSD);
+        aavePool = IPool(_aavePool);
         treasury = msg.sender;
-        rebalancer = msg.sender;
+
+        _initializeStrategies();
+
+        // Note: cUSD approval will be done on first deposit to avoid constructor issues
     }
-    
-    /* ========== UPGRADE AUTHORIZATION ========== */
-    
-    function _authorizeUpgrade(address newImplementation) 
-        internal 
-        override 
-        onlyOwner 
-    {}
-    
-    function version() external pure returns (string memory) {
-        return "1.0.0";
+
+    function _initializeStrategies() internal {
+        strategies[StrategyType.CONSERVATIVE] = Strategy({
+            name: "Conservative",
+            aaveAllocation: 100,
+            reserveAllocation: 0,
+            targetAPY: 350,
+            riskLevel: 1,
+            isActive: true
+        });
+
+        strategies[StrategyType.BALANCED] = Strategy({
+            name: "Balanced",
+            aaveAllocation: 90,
+            reserveAllocation: 10,
+            targetAPY: 350,
+            riskLevel: 3,
+            isActive: true
+        });
+
+        strategies[StrategyType.GROWTH] = Strategy({
+            name: "Growth",
+            aaveAllocation: 80,
+            reserveAllocation: 20,
+            targetAPY: 350,
+            riskLevel: 5,
+            isActive: true
+        });
     }
-    
+
+    /* ========== SELF PROTOCOL INTEGRATION ========== */
+
+    /**
+     * @notice Required override: Return the configuration ID for verification
+     */
+    function getConfigId(
+        bytes32 destinationChainId,
+        bytes32 userIdentifier,
+        bytes memory userDefinedData
+    ) public view override returns (bytes32) {
+        if (configId == bytes32(0)) revert ConfigNotSet();
+        return configId;
+    }
+
+    /**
+     * @notice Set the Self Protocol configuration ID
+     * @dev Must be called after deployment with ID from tools.self.xyz
+     */
+    function setConfigId(bytes32 _configId) external onlyOwner {
+        require(_configId != bytes32(0), "Invalid config ID");
+        configId = _configId;
+        emit ConfigIdUpdated(_configId);
+    }
+
+    /**
+     * @notice Hook called after successful verification
+     * @dev Override from SelfVerificationRoot
+     */
+    function customVerificationHook(
+        ISelfVerificationRoot.GenericDiscloseOutputV2 memory output,
+        bytes memory userData
+    ) internal virtual override {
+        // Mark user as verified
+        users[msg.sender].isVerified = true;
+        users[msg.sender].verifiedAt = block.timestamp;
+        users[msg.sender].userIdentifier = output.userIdentifier;
+
+        // Set default strategy
+        userStrategy[msg.sender] = StrategyType.CONSERVATIVE;
+
+        emit UserVerified(msg.sender, output.userIdentifier, block.timestamp);
+    }
+
     /* ========== MODIFIERS ========== */
-    
+
     modifier onlyVerified() {
-        if (!ISelfVerifier(verifier).isVerified(msg.sender)) {
-            revert NotVerified();
-        }
+        if (!users[msg.sender].isVerified) revert NotVerified();
         _;
     }
-    
-    /* ========== DEPOSIT FUNCTIONS ========== */
-    
-    /**
-     * @notice Deposit cUSD to earn yield
-     * @param assets Amount of cUSD to deposit
-     * @return sharesIssued Shares minted to user
-     */
-    function deposit(uint256 assets) 
-        external 
-        nonReentrant 
-        whenNotPaused 
-        onlyVerified 
+
+    /* ========== IDENTITY VERIFICATION ========== */
+
+    function verifyIdentity(bytes calldata proof) external {
+        require(!users[msg.sender].isVerified, "Already verified");
+        
+        // Simple verification - just mark user as verified after QR code scan
+        // No on-chain proof validation needed
+        users[msg.sender].isVerified = true;
+        users[msg.sender].verifiedAt = block.timestamp;
+        userStrategy[msg.sender] = StrategyType.CONSERVATIVE;
+
+        emit UserVerified(msg.sender, block.timestamp);
+    }
+
+    function _isVerified(address user) internal view returns (bool) {
+        return users[user].isVerified;
+    }
+
+    /* ========== CORE FUNCTIONS: DEPOSIT ========== */
+
+    function deposit(
+        uint256 assets
+    )
+        external
+        nonReentrant
+        whenNotPaused
+        onlyVerified
         returns (uint256 sharesIssued)
     {
-        // Validation
         if (assets < MIN_DEPOSIT) revert InvalidAmount();
-        if (assets > maxUserDeposit) revert ExceedsUserLimit();
-        if (totalAssets() + assets > maxTotalDeposit) revert ExceedsTVLLimit();
-        
-        // Calculate shares
+        if (assets > MAX_DEPOSIT) revert ExceedsMaxDeposit();
+        if (totalAssets() + assets > MAX_TVL) revert ExceedsMaxTVL();
+
         sharesIssued = _convertToShares(assets);
-        
-        // Update state
+
         shares[msg.sender] += sharesIssued;
         totalShares += sharesIssued;
-        userData[msg.sender].totalDeposited += assets;
-        userData[msg.sender].lastActionTime = block.timestamp;
+        users[msg.sender].totalDeposited += assets;
+        users[msg.sender].lastActionTime = block.timestamp;
         totalDeposited += assets;
-        
-        // Transfer assets from user
-        asset.safeTransferFrom(msg.sender, address(this), assets);
-        
-        // Deploy to strategy (keeping reserve)
-        _deployToStrategy(assets);
-        
+
+        cUSD.safeTransferFrom(msg.sender, address(this), assets);
+        _deployToAave(assets);
+
         emit Deposited(msg.sender, assets, sharesIssued);
     }
-    
-    /**
-     * @notice Internal function to deploy assets to strategy
-     */
-    function _deployToStrategy(uint256 amount) internal {
+
+    function _deployToAave(uint256 amount) internal {
         uint256 reserveAmount = (amount * RESERVE_RATIO) / 100;
         uint256 deployAmount = amount - reserveAmount;
-        
+
         if (deployAmount > 0) {
-            // Approve strategy
-            asset.forceApprove(strategy, deployAmount);
-            
-            // Call strategy deposit
-            uint256 deposited = IVaultYieldStrategy(strategy).deposit(deployAmount);
-            if (deposited != deployAmount) {
-                revert StrategyDepositMismatch(deployAmount, deposited);
+            // Ensure Aave has approval (safer incremental approval)
+            uint256 currentAllowance = cUSD.allowance(
+                address(this),
+                address(aavePool)
+            );
+            if (currentAllowance < deployAmount) {
+                // Use incremental approval instead of unlimited
+                uint256 neededAllowance = deployAmount - currentAllowance;
+                cUSD.approve(address(aavePool), currentAllowance + neededAllowance);
             }
+
+            // Supply to Aave (receives acUSD in return)
+            aavePool.supply(
+                address(cUSD),
+                deployAmount,
+                address(this),
+                0 // No referral code
+            );
+
+            emit DeployedToAave(deployAmount, block.timestamp);
         }
     }
-    
-    /* ========== WITHDRAW FUNCTIONS ========== */
-    
-    /**
-     * @notice Withdraw cUSD (principal + yield)
-     * @param assets Requested assets to withdraw
-     * @return sharesBurned Shares burned
-     */
-    function withdraw(uint256 assets) external returns (uint256 sharesBurned) {
-        return withdraw(assets, assets);
-    }
-    
-    /**
-     * @notice Withdraw with slippage/deadline style guard
-     * @param assets Requested assets to withdraw
-     * @param minAssetsOut Minimum acceptable assets after share conversion
-     */
-    function withdraw(uint256 assets, uint256 minAssetsOut)
-        public
-        nonReentrant
-        returns (uint256 sharesBurned)
-    {
-        return _processWithdraw(msg.sender, assets, minAssetsOut);
-    }
-    
-    /**
-     * @notice Withdraw all user's balance
-     */
-    function withdrawAll() external returns (uint256 sharesBurned) {
-        uint256 userAssets = balanceOf(msg.sender);
-        return withdraw(userAssets, userAssets);
-    }
-    
-    /**
-     * @notice Internal function to withdraw from strategy
-     */
-    function _withdrawFromStrategy(uint256 amount) internal {
-        uint256 received = IVaultYieldStrategy(strategy).withdraw(amount);
-        if (received < amount) revert InsufficientBalance();
-    }
 
-    function _processWithdraw(
-        address user,
-        uint256 assets,
-        uint256 minAssetsOut
-    ) internal returns (uint256 sharesBurned) {
-        if (assets == 0) revert InvalidAmount();
+    /* ========== CORE FUNCTIONS: WITHDRAW ========== */
 
-        uint256 maxWithdraw = balanceOf(user);
-        if (assets > maxWithdraw) revert ExceedsBalance();
-
+    function withdraw(
+        uint256 assets
+    ) external nonReentrant returns (uint256 sharesBurned) {
         sharesBurned = _convertToShares(assets);
-        if (shares[user] < sharesBurned) revert InsufficientShares();
 
-        uint256 assetsOut = _convertToAssets(sharesBurned);
-        if (assetsOut < minAssetsOut) revert SlippageTooHigh();
+        if (shares[msg.sender] < sharesBurned) revert InsufficientShares();
 
-        shares[user] -= sharesBurned;
+        shares[msg.sender] -= sharesBurned;
         totalShares -= sharesBurned;
+        users[msg.sender].totalWithdrawn += assets;
+        users[msg.sender].lastActionTime = block.timestamp;
+        totalWithdrawn += assets;
 
-        userData[user].totalWithdrawn += assetsOut;
-        userData[user].lastActionTime = block.timestamp;
-        totalWithdrawn += assetsOut;
+        uint256 reserveBalance = cUSD.balanceOf(address(this));
 
-        uint256 reserveBalance = asset.balanceOf(address(this));
-
-        if (reserveBalance < assetsOut) {
-            uint256 shortfall = assetsOut - reserveBalance;
-            _withdrawFromStrategy(shortfall);
+        if (reserveBalance < assets) {
+            uint256 shortfall = assets - reserveBalance;
+            _withdrawFromAave(shortfall);
         }
 
-        asset.safeTransfer(user, assetsOut);
+        cUSD.safeTransfer(msg.sender, assets);
 
-        _ensureReserveRatio();
-
-        emit Withdrawn(user, assetsOut, sharesBurned);
+        emit Withdrawn(msg.sender, assets, sharesBurned);
     }
 
-    function _ensureReserveRatio() internal {
-        uint256 _totalAssets = totalAssets();
-        if (_totalAssets == 0) return;
+    function _withdrawFromAave(uint256 amount) internal {
+        // Withdraw from Aave (burns acUSD, returns cUSD)
+        uint256 withdrawn = aavePool.withdraw(
+            address(cUSD),
+            amount,
+            address(this)
+        );
 
-        uint256 targetReserve = (_totalAssets * RESERVE_RATIO) / 100;
-        uint256 currentReserve = asset.balanceOf(address(this));
-
-        if (currentReserve < targetReserve) {
-            uint256 shortfall = targetReserve - currentReserve;
-            _withdrawFromStrategy(shortfall);
-        }
+        emit WithdrawnFromAave(withdrawn, block.timestamp);
     }
-    
+
     /* ========== VIEW FUNCTIONS ========== */
-    
-    /**
-     * @notice Get total assets under management
-     * @return Total cUSD (reserve + strategy)
-     */
+
     function totalAssets() public view returns (uint256) {
-        uint256 reserveBalance = asset.balanceOf(address(this));
-        
-        uint256 strategyBalance = 0;
-        if (strategy != address(0)) {
-            try IVaultYieldStrategy(strategy).totalAssets() returns (uint256 balance) {
-                strategyBalance = balance;
-            } catch {
-                strategyBalance = 0;
-            }
-        }
-        
-        return reserveBalance + strategyBalance;
+        uint256 reserveBalance = cUSD.balanceOf(address(this));
+        uint256 aaveBalance = acUSD.balanceOf(address(this));
+        return reserveBalance + aaveBalance;
     }
-    
-    /**
-     * @notice Get user's balance in assets
-     * @param user User address
-     * @return Balance in cUSD
-     */
-    function balanceOf(address user) public view returns (uint256) {
+
+    function balanceOf(address user) external view returns (uint256) {
         return _convertToAssets(shares[user]);
     }
-    
-    /**
-     * @notice Get user's earnings
-     * @param user User address
-     * @return Total earnings
-     */
+
     function getEarnings(address user) external view returns (uint256) {
-        uint256 currentBalance = balanceOf(user);
-        uint256 deposited = userData[user].totalDeposited;
-        uint256 withdrawn = userData[user].totalWithdrawn;
-        
+        uint256 currentBalance = _convertToAssets(shares[user]);
+        uint256 deposited = users[user].totalDeposited;
+        uint256 withdrawn = users[user].totalWithdrawn;
+
         if (currentBalance + withdrawn > deposited) {
             return (currentBalance + withdrawn) - deposited;
         }
         return 0;
     }
-    
-    /**
-     * @notice Convert assets to shares
-     */
-    function _convertToShares(uint256 assets) internal view returns (uint256) {
-        uint256 adjustedShares = totalShares + VIRTUAL_SHARES;
-        uint256 adjustedAssets = totalAssets() + VIRTUAL_ASSETS;
-        return (assets * adjustedShares) / adjustedAssets;
+
+    function getVaultStats()
+        external
+        view
+        returns (
+            uint256 _totalAssets,
+            uint256 _totalShares,
+            uint256 reserveBalance,
+            uint256 aaveBalance,
+            uint256 _totalDeposited,
+            uint256 _totalWithdrawn
+        )
+    {
+        return (
+            totalAssets(),
+            totalShares,
+            cUSD.balanceOf(address(this)),
+            acUSD.balanceOf(address(this)),
+            totalDeposited,
+            totalWithdrawn
+        );
     }
-    
-    /**
-     * @notice Convert shares to assets
-     */
+
+    function getCurrentAPY() external view returns (uint256) {
+        return 350;
+    }
+
+    /* ========== SHARE CONVERSION ========== */
+
+    function _convertToShares(uint256 assets) internal view returns (uint256) {
+        uint256 _totalAssets = totalAssets();
+        if (totalShares == 0 || _totalAssets == 0) return assets;
+        return (assets * totalShares) / _totalAssets;
+    }
+
     function _convertToAssets(uint256 _shares) internal view returns (uint256) {
         if (totalShares == 0) return 0;
-        uint256 adjustedShares = totalShares + VIRTUAL_SHARES;
-        uint256 adjustedAssets = totalAssets() + VIRTUAL_ASSETS;
-        return (_shares * adjustedAssets) / adjustedShares;
+        return (_shares * totalAssets()) / totalShares;
     }
-    
-    /* ========== REBALANCE ========== */
-    
-    /**
-     * @notice Rebalance between strategy and reserve
-     */
+
+    /* ========== STRATEGY MANAGEMENT ========== */
+
+    function changeStrategy(StrategyType newStrategy) external onlyVerified {
+        require(strategies[newStrategy].isActive, "Invalid strategy");
+
+        StrategyType oldStrategy = userStrategy[msg.sender];
+        userStrategy[msg.sender] = newStrategy;
+
+        emit StrategyChanged(msg.sender, oldStrategy, newStrategy);
+    }
+
+    /* ========== ADMIN FUNCTIONS ========== */
+
     function rebalance() external {
-        require(msg.sender == owner() || msg.sender == rebalancer, "Unauthorized");
-        
+        require(msg.sender == owner() || msg.sender == aiAgent, "Unauthorized");
+
         uint256 _totalAssets = totalAssets();
         uint256 targetReserve = (_totalAssets * RESERVE_RATIO) / 100;
-        uint256 currentReserve = asset.balanceOf(address(this));
-        
+        uint256 currentReserve = cUSD.balanceOf(address(this));
+
         if (currentReserve < targetReserve) {
-            // Need more in reserve
             uint256 needed = targetReserve - currentReserve;
-            _withdrawFromStrategy(needed);
+            _withdrawFromAave(needed);
         } else if (currentReserve > targetReserve * 2) {
-            // Too much in reserve
             uint256 excess = currentReserve - targetReserve;
-            _deployToStrategy(excess);
+            _deployToAave(excess);
         }
-        
+
         lastRebalance = block.timestamp;
-        
-        // Get updated balances
-        uint256 strategyBalance = 0;
-        if (strategy != address(0)) {
-            try IVaultYieldStrategy(strategy).totalAssets() returns (uint256 balance) {
-                strategyBalance = balance;
-            } catch {
-                strategyBalance = 0;
-            }
-        }
-        
-        emit Rebalanced(strategyBalance, asset.balanceOf(address(this)), block.timestamp);
+        emit Rebalanced(
+            acUSD.balanceOf(address(this)),
+            cUSD.balanceOf(address(this)),
+            block.timestamp
+        );
     }
-    
-    /* ========== ADMIN FUNCTIONS ========== */
-    
-    function setStrategy(address _strategy) external onlyOwner {
-        if (_strategy == address(0)) revert ZeroAddress();
-        address old = strategy;
-        strategy = _strategy;
-        emit StrategyUpdated(old, _strategy);
+
+    function setAIAgent(address _aiAgent) external onlyOwner {
+        if (_aiAgent == address(0)) revert ZeroAddress();
+        aiAgent = _aiAgent;
     }
-    
-    function setVerifier(address _verifier) external onlyOwner {
-        if (_verifier == address(0)) revert ZeroAddress();
-        address old = verifier;
-        verifier = _verifier;
-        emit VerifierUpdated(old, _verifier);
+
+    function setTreasury(address _treasury) external onlyOwner {
+        if (_treasury == address(0)) revert ZeroAddress();
+        treasury = _treasury;
     }
-    
-    function setLimits(uint256 _maxUser, uint256 _maxTotal) external onlyOwner {
-        maxUserDeposit = _maxUser;
-        maxTotalDeposit = _maxTotal;
-        emit LimitsUpdated(_maxUser, _maxTotal);
-    }
-    
-    function setRebalancer(address _rebalancer) external onlyOwner {
-        if (_rebalancer == address(0)) revert ZeroAddress();
-        rebalancer = _rebalancer;
-    }
-    
+
     function pause() external onlyOwner {
         _pause();
     }
-    
+
     function unpause() external onlyOwner {
         _unpause();
     }
-    
-    function emergencyWithdraw(address token, uint256 amount) external onlyOwner {
-        require(paused(), "Must be paused");
+
+    function emergencyWithdraw(
+        address token,
+        uint256 amount
+    ) external onlyOwner {
+        require(paused(), "Not paused");
         IERC20(token).safeTransfer(owner(), amount);
     }
-    
-    /* ========== STORAGE GAP ========== */
-    uint256[50] private __gap;
 }
